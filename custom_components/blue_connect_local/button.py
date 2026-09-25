@@ -7,11 +7,13 @@ import logging
 from homeassistant.components.button import ButtonEntity
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
+from homeassistant.exceptions import HomeAssistantError
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
 from .const import (
     CONF_MAC_ADDRESS,
+    DOMAIN,
     TIMEOUT_FORCE_REFRESH,
     blue_connect_device_info,
     get_blue_connect_model,
@@ -23,7 +25,7 @@ _LOGGER = logging.getLogger(__name__)
 async def async_setup_entry(
     hass: HomeAssistant, entry: ConfigEntry, async_add_entities: AddEntitiesCallback
 ) -> None:
-    coordinator = entry.runtime_data
+    coordinator = hass.data[DOMAIN][entry.entry_id]
     mac = entry.data[CONF_MAC_ADDRESS]
     sku = coordinator.data.get("sku")
     has_conductivity = coordinator.data.get("has_conductivity")
@@ -89,7 +91,8 @@ class BlueConnectForceAnalysisButton(CoordinatorEntity, ButtonEntity):
                     TIMEOUT_FORCE_REFRESH,
                     self.coordinator.safe_mac,
                 )
-            except Exception:
+            # PEP 758 (Python 3.14): parentheses are optional when there is no `as` clause. Intentional.
+            except HomeAssistantError, RuntimeError:
                 _LOGGER.exception(
                     "Analysis failed for %s",
                     self.coordinator.safe_mac,

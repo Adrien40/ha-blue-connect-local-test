@@ -1,4 +1,4 @@
-"""Coordinator: active cycle (GATT), passive mode (adverts), persistence."""
+"""Coordinateur : cycle actif (GATT), mode passif (annonces), persistance."""
 
 from __future__ import annotations
 
@@ -6,7 +6,6 @@ import logging
 from types import SimpleNamespace
 
 import pytest
-from homeassistant.config_entries import SOURCE_REAUTH
 from homeassistant.helpers import device_registry as dr
 from homeassistant.helpers import entity_registry as er
 
@@ -34,7 +33,6 @@ from custom_components.blue_connect_local.const import (
     CONF_TDS,
     CONF_TEMP_OFFSET,
     CONF_TH,
-    DOMAIN,
 )
 from custom_components.blue_connect_local.coordinator import (
     find_device,
@@ -53,7 +51,7 @@ from .helpers import (
 
 
 def _seen(frame: bytes, *, service: bool = False) -> SimpleNamespace:
-    """Bluetooth advertisement carrying `frame` (manufacturer or service data)."""
+    """Annonce Bluetooth portant `frame` (données constructeur ou de service)."""
     if service:
         return SimpleNamespace(manufacturer_data={}, service_data={"uuid": frame})
     return SimpleNamespace(manufacturer_data={0x1234: frame}, service_data={})
@@ -92,7 +90,7 @@ async def test_active_cycle_populates_data(coordinator):
     assert d["battery_level"] == 80
     assert d["battery"] == int(4000 * 0.8791)
     assert d["raw_frame"] == clean_hex(build_frame())
-    # Additional GATT reads
+    # Lectures GATT complémentaires
     assert d["raw_frame_0005"] == "0102030405"
     assert d["accelerometer"] == "X: 0 | Y: 900 | Z: 0"
     assert d["float_status"] == "vertical"
@@ -135,7 +133,7 @@ async def test_float_orientation(coordinator, ble, tilt, expected):
 
 
 async def test_optional_reads_may_fail_without_failing_the_cycle(coordinator, ble):
-    ble.client.reads.clear()  # no additional characteristic readable
+    ble.client.reads.clear()  # aucune caractéristique complémentaire lisible
     await coordinator.async_refresh()
     assert coordinator.data["bluetooth_status"] == BT_STATUS_SUCCESS
     assert "serial_number" not in coordinator.data
@@ -146,7 +144,7 @@ async def test_device_identity_is_read_only_once(coordinator, ble):
     ble.client.reads["70ea0020-7a29-4fdf-93d2-838665e72677"] = b"OTHER\x00"
     ble.client.frames = [build_frame(ph=7.5)]
     await coordinator.async_refresh()
-    assert coordinator.data["serial_number"] == "SN12345"  # unchanged
+    assert coordinator.data["serial_number"] == "SN12345"  # inchangé
 
 
 async def test_device_registry_gets_model_and_serial(hass, coordinator):
@@ -160,7 +158,7 @@ async def test_device_registry_gets_model_and_serial(hass, coordinator):
 
 
 # ---------------------------------------------------------------------------
-# Calibration, offsets, Langelier
+# Calibration, décalages, Langelier
 # ---------------------------------------------------------------------------
 async def test_calibration_and_offsets_are_applied(setup_integration, ble):
     ble.client = FakeBlueClient([build_frame(temp_c=25.0, ph=7.4, orp_mv=700)])
@@ -168,7 +166,7 @@ async def test_calibration_and_offsets_are_applied(setup_integration, ble):
         make_entry(
             **{
                 CONF_PH_CALIB_4: 4.1,
-                CONF_PH_CALIB_7: 6.9,  # probe drift
+                CONF_PH_CALIB_7: 6.9,  # dérive de la sonde
                 CONF_TEMP_OFFSET: 1.5,
                 CONF_ORP_REF: 650,
                 CONF_ORP_CALIB: 640,
@@ -179,39 +177,9 @@ async def test_calibration_and_offsets_are_applied(setup_integration, ble):
     assert coord.data["ph"] == pytest.approx(7.54, abs=0.01)
     assert coord.data["temperature"] == pytest.approx(26.5)
     assert coord.data["orp"] == 710
-    # Raw values stay intact (to recompute without a new measurement).
+    # Les valeurs brutes restent intactes (pour recalculer sans nouvelle mesure).
     assert coord.data["ph_raw"] == pytest.approx(7.4)
     assert coord.data["orp_raw"] == 700
-
-
-async def test_degenerate_calibration_falls_back_to_raw_ph(setup_integration, ble):
-    ble.client = FakeBlueClient([build_frame(temp_c=25.0, ph=7.4, orp_mv=700)])
-    coord = await setup_integration(
-        make_entry(
-            **{
-                CONF_PH_CALIB_4: 5.0,
-                CONF_PH_CALIB_7: 5.005,  # calibration points nearly identical
-            }
-        )
-    )
-    await coord.async_refresh()
-    # Degenerate calibration: falls back to raw pH rather than crashing
-    # or silently returning an irrelevant value.
-    assert coord.data["ph"] == pytest.approx(7.4)
-    assert coord.data["ph_raw"] == pytest.approx(7.4)
-
-
-async def test_notification_queue_full_is_logged(setup_integration, ble, caplog):
-    # 6 distinct frames delivered at once by the same trigger: the queue
-    # (maxsize=4) is bound to overflow, which must now be logged (not silent).
-    frames = [build_frame(battery_adc=4000 + i) for i in range(6)]
-    ble.client = FakeBlueClient(frames=frames, frames_per_trigger=6)
-    coord = await setup_integration(make_entry())
-    with caplog.at_level(logging.DEBUG):
-        await coord.async_refresh()
-    assert "Notification queue full" in caplog.text
-    # The cycle still succeeds: the last frames of the burst are enough.
-    assert coord.data["bluetooth_status"] == BT_STATUS_SUCCESS
 
 
 async def test_langelier_follows_water_parameters(coordinator):
@@ -234,17 +202,13 @@ async def test_recompute_keeps_receive_method(coordinator):
 
 
 # ---------------------------------------------------------------------------
-# Authentication
+# Authentification
 # ---------------------------------------------------------------------------
-async def test_rejected_access_code(hass, coordinator, ble):
+async def test_rejected_access_code(coordinator, ble):
     ble.client.auth_ok = False
     await coordinator.async_refresh()
     assert coordinator.data["bluetooth_status"] == BT_STATUS_AUTH_FAILED
-    assert coordinator.last_update_success is False  # no history
-
-    flows = hass.config_entries.flow.async_progress_by_handler(DOMAIN)
-    reauth_flows = [f for f in flows if f["context"]["source"] == SOURCE_REAUTH]
-    assert len(reauth_flows) == 1
+    assert coordinator.last_update_success is False  # pas d'historique
     assert not [w for w in ble.client.writes if w[0] == CHAR_TRIGGER_UUID]
 
 
@@ -296,8 +260,8 @@ async def test_no_notification_is_an_error(coordinator, ble):
 
 
 async def test_invalid_payload_retry_budget_runs_out(coordinator, ble):
-    """Regression: retry_count was reset to 0 before decoding, so an invalid
-    frame relaunched "retry" indefinitely without ever giving up."""
+    """Régression : retry_count était remis à 0 avant le décodage, donc une trame
+    invalide relançait indéfiniment « nouvelle tentative » sans jamais abandonner."""
     ble.client.frames = [b"\x00" * 5 for _ in range(3)]
     statuses = []
     for _ in range(3):
@@ -305,7 +269,7 @@ async def test_invalid_payload_retry_budget_runs_out(coordinator, ble):
         statuses.append(coordinator.data["bluetooth_status"])
     assert statuses == [BT_STATUS_ERROR_RETRY, BT_STATUS_ERROR_RETRY, BT_STATUS_ERROR]
     assert coordinator.retry_count == 0
-    assert coordinator.last_update_success is False  # no history
+    assert coordinator.last_update_success is False  # aucun historique
 
 
 async def test_invalid_payload_keeps_history(coordinator, ble):
@@ -331,14 +295,6 @@ async def test_device_missing_from_cache(coordinator, ble):
     assert coordinator.last_update_success is False
 
 
-async def test_falls_back_to_non_connectable_device(coordinator, ble):
-    # Device only found via connectable=False (e.g. seen by a scanner that
-    # cannot connect to it directly): must not be treated as missing.
-    ble.device_requires_non_connectable = True
-    await coordinator.async_refresh()
-    assert coordinator.data["bluetooth_status"] == BT_STATUS_SUCCESS
-
-
 @pytest.mark.parametrize(
     "condition",
     [{"scanner_count": 0}, {"last_seen_age": 500}, {"last_seen_age": None}],
@@ -351,15 +307,7 @@ async def test_unavailable_bluetooth_does_not_connect(coordinator, ble, conditio
     await coordinator.async_refresh()
     ble.establish.assert_not_called()
     assert coordinator.data["bluetooth_status"] == BT_STATUS_OUT_OF_RANGE
-    assert coordinator.data["ph"] is not None  # history kept
-
-
-async def test_unavailable_bluetooth_is_logged(coordinator, ble, caplog):
-    await coordinator.async_refresh()
-    ble.last_seen_age = 500
-    with caplog.at_level(logging.DEBUG):
-        await coordinator.async_refresh()
-    assert "Bluetooth signal unavailable" in caplog.text
+    assert coordinator.data["ph"] is not None  # historique conservé
 
 
 async def test_forced_analysis_bypasses_stale_advertisement_check(coordinator, ble):
@@ -370,10 +318,10 @@ async def test_forced_analysis_bypasses_stale_advertisement_check(coordinator, b
 
 
 # ---------------------------------------------------------------------------
-# Pause, forced analysis, no access code, shutdown
+# Pause, analyse forcée, absence de code d'accès, arrêt
 # ---------------------------------------------------------------------------
 async def test_paused_measurements_skip_connection(coordinator, ble):
-    coordinator._force_one_shot = False  # the startup analysis is forced
+    coordinator._force_one_shot = False  # la 1re analyse de démarrage est forcée
     coordinator.update_volatile_state({"active_measures": False})
     await coordinator.async_refresh()
     ble.establish.assert_not_called()
@@ -396,7 +344,7 @@ async def test_no_access_code_means_passive_only(setup_integration, ble):
     ble.establish.assert_not_called()
     assert coord.data["bluetooth_status"] == "passive_mode"
     coord.request_one_shot_analysis()
-    assert coord._force_one_shot is False  # no code, no active analysis
+    assert coord._force_one_shot is False  # sans code, pas d'analyse active
 
 
 async def test_no_connection_after_shutdown(coordinator, ble):
@@ -407,10 +355,12 @@ async def test_no_connection_after_shutdown(coordinator, ble):
 
 async def test_shutdown_is_idempotent_and_cancels_timers(coordinator, ble):
     ble.client.frames = [b"\x00" * 5]
-    await coordinator.async_refresh()  # schedules a retry in 60 s
+    await coordinator.async_refresh()  # programme un retry à 60 s
     assert coordinator._retry_cancel is not None
     await coordinator.async_shutdown()
-    await coordinator.async_shutdown()  # 2nd call (HA + async_unload_entry): no error
+    await (
+        coordinator.async_shutdown()
+    )  # 2e appel (HA + async_unload_entry) : sans erreur
     assert coordinator._retry_cancel is None
     assert coordinator._ble_unavail_cancel is None
     assert coordinator._save_cancel is None
@@ -419,8 +369,8 @@ async def test_shutdown_is_idempotent_and_cancels_timers(coordinator, ble):
 async def test_first_analysis_timer_is_cancelled_on_unload(
     hass, setup_integration, entry, ble
 ):
-    """The 1st analysis (2 s) is scheduled at startup: unloading must cancel it,
-    otherwise a timer survives the entry."""
+    """La 1re analyse (2 s) est planifiée au démarrage : décharger doit l'annuler,
+    sinon une minuterie survit à l'entrée."""
     coord = await setup_integration(entry)
     assert coord._first_analysis_cancel is not None
     await hass.config_entries.async_unload(entry.entry_id)
@@ -463,7 +413,7 @@ async def test_passive_frame_with_prefix_byte(coordinator):
     frame = build_frame(ph=7.3, prefixed=True)
     coordinator._on_ble_seen(_seen(frame), None)
     assert coordinator.data["ph"] == pytest.approx(7.3)
-    assert coordinator.data["raw_frame"] == clean_hex(frame)  # prefix stripped
+    assert coordinator.data["raw_frame"] == clean_hex(frame)  # préfixe retiré
 
 
 async def test_identical_passive_frame_is_ignored(coordinator):
@@ -510,16 +460,13 @@ async def test_garbage_advertisement_is_ignored(coordinator, payload):
     assert coordinator.data.get("ph") is None
 
 
-async def test_signal_lost_then_found(coordinator, caplog):
-    with caplog.at_level(logging.DEBUG):
-        coordinator._on_ble_unavailable(None)
-        assert coordinator.data["bluetooth_status"] == BT_STATUS_OUT_OF_RANGE
-        coordinator._on_ble_seen(
-            SimpleNamespace(manufacturer_data={}, service_data={}), None
-        )
+async def test_signal_lost_then_found(coordinator):
+    coordinator._on_ble_unavailable(None)
+    assert coordinator.data["bluetooth_status"] == BT_STATUS_OUT_OF_RANGE
+    coordinator._on_ble_seen(
+        SimpleNamespace(manufacturer_data={}, service_data={}), None
+    )
     assert coordinator.data["bluetooth_status"] == BT_STATUS_WAITING
-    assert "BLE signal lost" in caplog.text
-    assert "BLE signal found" in caplog.text
 
 
 async def test_signal_found_in_passive_mode(setup_integration):
@@ -530,7 +477,7 @@ async def test_signal_found_in_passive_mode(setup_integration):
 
 
 # ---------------------------------------------------------------------------
-# Blue Connect Silver (no conductivity sensor)
+# Blue Connect Silver (sans capteur de conductivité)
 # ---------------------------------------------------------------------------
 async def test_silver_has_no_conductivity_or_salinity(hass, coordinator):
     coordinator._on_ble_seen(_seen(build_frame(conductivity=None)), None)
@@ -548,7 +495,7 @@ async def test_silver_disables_conductivity_entities_once(hass, entry, coordinat
         )
         assert entity.disabled_by is er.RegistryEntryDisabler.INTEGRATION
 
-    # Manual re-enable by the user: must not be re-disabled.
+    # Réactivation manuelle par l'utilisateur : ne doit pas être re-désactivée.
     entity_id = reg.async_get_entity_id(
         "sensor", "blue_connect_local", f"{MAC}_salinity"
     )
@@ -576,7 +523,7 @@ async def test_schedule_is_aligned_on_reference_time(setup_integration):
     coord.update_schedule()
     slot = coord.next_slot
     assert slot.minute == 0
-    assert (slot.hour - 8) % 2 == 0  # slots at 08:00, 10:00, 12:00...
+    assert (slot.hour - 8) % 2 == 0  # créneaux 08:00, 10:00, 12:00…
     assert 0 < coord.update_interval.total_seconds() <= 2 * 3600
 
 
@@ -635,8 +582,8 @@ async def test_restore_invalid_raw_frame_discards_measurements_but_keeps_prefere
     )
     with caplog.at_level(logging.WARNING):
         coord = await setup_integration(make_entry())
-    assert "ph" not in coord.data  # measurement discarded
-    assert coord.data["tac"] == 90  # preferences kept
+    assert "ph" not in coord.data  # mesure jetée
+    assert coord.data["tac"] == 90  # préférences conservées
     assert coord.data["cya"] == 55
     assert coord.data["sku"] == "WA000100"
     assert "Invalid raw_frame" in caplog.text

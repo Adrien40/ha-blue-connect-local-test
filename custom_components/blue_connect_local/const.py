@@ -3,8 +3,6 @@
 
 from __future__ import annotations
 
-from datetime import timedelta
-
 from homeassistant.helpers.device_registry import CONNECTION_BLUETOOTH, DeviceInfo
 
 from .model import (  # noqa: F401 (re-export)
@@ -60,12 +58,12 @@ TIMEOUT_BLE_CONN = 30.0
 TIMEOUT_GATT_OP = 10.0
 TIMEOUT_NOTIFICATION_WAIT = 60.0
 TIMEOUT_SAFETY_MARGIN = 30.0
-# BLE cycle pauses (named so they can be shortened in tests).
-AUTH_SETTLE_DELAY = 0.2  # let the probe process the written access code
-AUTH_STATUS_RETRY_DELAY = 0.5  # 2nd read of the authentication status
-GATT_WRITE_RETRY_DELAY = 1.0  # pause before retrying a write
-ERROR_RETRY_DELAY = 60  # seconds before retrying after a BLE error
-FIRST_ANALYSIS_DELAY = 2.0  # delay before the 1st active analysis at startup
+# Pauses du cycle BLE (nommées pour pouvoir être raccourcies dans les tests).
+AUTH_SETTLE_DELAY = 0.2  # laisser la sonde traiter le code d'accès écrit
+AUTH_STATUS_RETRY_DELAY = 0.5  # 2e lecture du statut d'authentification
+GATT_WRITE_RETRY_DELAY = 1.0  # pause avant de retenter une écriture
+ERROR_RETRY_DELAY = 60  # secondes avant de retenter après une erreur BLE
+FIRST_ANALYSIS_DELAY = 2.0  # délai avant la 1re analyse active au démarrage
 POST_PAYLOAD_READ_COUNT = 5
 # Worst case: one connection, up to 2 full auth+trigger+notification cycles,
 # then the post-payload reads (raw_frame_0005, accelerometer, serial number,
@@ -77,7 +75,6 @@ TIMEOUT_FORCE_REFRESH = (
     + TIMEOUT_SAFETY_MARGIN
 )
 DEBOUNCE_COOLDOWN = 0.3
-REPAIR_STALE_AFTER = timedelta(days=3)
 SAVE_DEBOUNCE_DELAY = 2.0
 
 BLE_RECENTLY_SEEN_THRESHOLD_S: int = 120

@@ -1,4 +1,4 @@
-"""Shared fixtures: simulated Bluetooth, config entry, coordinator."""
+"""Fixtures communes : Bluetooth simulé, entrée de configuration, coordinateur."""
 
 from __future__ import annotations
 
@@ -31,27 +31,22 @@ PKG = "custom_components.blue_connect_local"
 
 @pytest.fixture(autouse=True)
 def _enable_custom_integrations(enable_custom_integrations: None) -> None:
-    """Allow HA to load custom_components/ during the tests."""
+    """Autorise HA à charger custom_components/ pendant les tests."""
 
 
 @dataclass
 class BleEnv:
-    """Controllable state of simulated Bluetooth."""
+    """État pilotable du Bluetooth simulé."""
 
     client: FakeBlueClient = field(default_factory=FakeBlueClient)
     scanner_count: int = 1
-    last_seen_age: float | None = 0.0  # None = never seen
+    last_seen_age: float | None = 0.0  # None = jamais vu
     device_present: bool = True
-    device_requires_non_connectable: bool = False  # only found when connectable=False
     rssi: int = -60
     establish: AsyncMock = field(default_factory=AsyncMock)
 
-    def device(self, *, connectable: bool = True) -> BLEDevice | None:
-        if not self.device_present:
-            return None
-        if self.device_requires_non_connectable and connectable:
-            return None
-        return BLEDevice(MAC, "BC3 test", {})
+    def device(self) -> BLEDevice | None:
+        return BLEDevice(MAC, "BC3 test", {}) if self.device_present else None
 
     def service_info(self) -> SimpleNamespace | None:
         if self.last_seen_age is None:
@@ -61,7 +56,7 @@ class BleEnv:
 
 @pytest.fixture
 def ble(monkeypatch: pytest.MonkeyPatch) -> Generator[BleEnv]:
-    """Simulated Bluetooth: a client that returns a valid frame per trigger."""
+    """Bluetooth simulé : un client qui renvoie une trame valide par déclenchement."""
     env = BleEnv(client=FakeBlueClient(frames=[build_frame()]))
 
     async def _establish(*_args, **_kwargs):
@@ -72,7 +67,7 @@ def ble(monkeypatch: pytest.MonkeyPatch) -> Generator[BleEnv]:
     with (
         patch(
             f"{PKG}.coordinator.async_ble_device_from_address",
-            lambda *a, connectable=True, **k: env.device(connectable=connectable),
+            lambda *a, **k: env.device(),
         ),
         patch(
             f"{PKG}.coordinator.async_last_service_info",
@@ -86,7 +81,7 @@ def ble(monkeypatch: pytest.MonkeyPatch) -> Generator[BleEnv]:
         ),
         patch(f"{PKG}.coordinator.establish_connection", env.establish),
     ):
-        # Short cycles: tests never actually wait 60 s.
+        # Cycles courts : les tests n'attendent jamais 60 s pour de vrai.
         for name, value in (
             ("TIMEOUT_NOTIFICATION_WAIT", 0.2),
             ("TIMEOUT_GATT_OP", 0.5),
@@ -105,7 +100,7 @@ def make_entry(
     minor_version: int = 4,
     **options,
 ) -> MockConfigEntry:
-    """Blue Connect entry (version 1.4). Without `access_code`: passive mode only."""
+    """Entrée Blue Connect (version 1.4). Sans `access_code` : mode passif seul."""
     data = {CONF_MAC_ADDRESS: MAC}
     if access_code:
         data[CONF_ACCESS_CODE] = access_code
@@ -129,7 +124,7 @@ def entry() -> MockConfigEntry:
 async def setup_integration(
     hass: HomeAssistant, enable_bluetooth: None, ble: BleEnv
 ) -> AsyncGenerator[Callable[..., Awaitable[BlueConnectCoordinator]]]:
-    """Sets up the entry and unloads at the end (also cancels timers)."""
+    """Installe l'entrée et décharge à la fin (annule aussi les minuteries)."""
     entries: list[MockConfigEntry] = []
 
     async def _setup(config_entry: MockConfigEntry) -> BlueConnectCoordinator:
@@ -137,7 +132,7 @@ async def setup_integration(
         entries.append(config_entry)
         assert await hass.config_entries.async_setup(config_entry.entry_id)
         await hass.async_block_till_done(wait_background_tasks=True)
-        return config_entry.runtime_data
+        return hass.data[DOMAIN][config_entry.entry_id]
 
     yield _setup
 
@@ -149,12 +144,12 @@ async def setup_integration(
 
 @pytest.fixture
 async def coordinator(entry, setup_integration) -> BlueConnectCoordinator:
-    """Coordinator set up with an access code, without an automatic 1st analysis."""
+    """Coordinateur installé avec un code d'accès, sans 1re analyse automatique."""
     return await setup_integration(entry)
 
 
 def entity_id(hass: HomeAssistant, domain: str, key: str) -> str:
-    """entity_id of an entity, found by its unique_id."""
+    """entity_id d'une entité, retrouvée par son unique_id."""
     found = er.async_get(hass).async_get_entity_id(domain, DOMAIN, f"{MAC}_{key}")
     assert found is not None, f"no {domain} entity with unique_id {MAC}_{key}"
     return found

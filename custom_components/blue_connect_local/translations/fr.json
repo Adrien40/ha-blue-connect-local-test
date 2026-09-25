@@ -25,9 +25,6 @@
               "reference_time": "🕒 Heure de Référence (Planification)",
               "passive_measures": "📡 Analyses Internes du Blue Connect (Passives)",
               "ignore_echoes": "🚫 Ignorer les échos d'Analyses (Passives)"
-            },
-            "data_description": {
-              "reference_time": "Heure de référence utilisée pour aligner les analyses planifiées sur des créneaux réguliers (ex. 08:00, 10:00, 12:00... pour un intervalle de 2 heures)."
             }
           },
           "probes_calibration": {
@@ -40,22 +37,8 @@
               "orp_calib": "📏 Valeur ORP mesurée (ex : 650)",
               "orp_ref": "🎯 Cible de la solution ORP (ex : 650)",
               "temp_offset": "🌡️ Décalage Température (°C) (+/-)"
-            },
-            "data_description": {
-              "ph_calib_7": "La valeur de pH brute réellement mesurée par votre sonde une fois plongée dans cette solution de calibration (pas la valeur nominale de la solution).",
-              "ph_calib_4": "La valeur de pH brute réellement mesurée par votre sonde une fois plongée dans cette solution de calibration (pas la valeur nominale de la solution)."
             }
           }
-        },
-        "data_description": {
-          "access_code": "Se trouve sur un autocollant sous le cache du port USB, ou sur le capuchon de protection des sondes. Nécessaire pour les analyses à la demande ; laissez vide pour une écoute uniquement passive."
-        }
-      },
-      "reauth_confirm": {
-        "title": "Ré-authentifier Blue Connect",
-        "description": "Le code d'accès de {name} a été refusé. Saisissez le nouveau code d'accès à 9 caractères.",
-        "data": {
-          "access_code": "Code d'Accès"
         }
       }
     },
@@ -74,8 +57,7 @@
       "invalid_access_code": "❌ Le Code d'Accès est invalide (9 caractères alphanumériques)."
     },
     "abort": {
-      "already_configured": "⚠️ Cet appareil est déjà configuré.",
-      "reauth_successful": "La ré-authentification a réussi"
+      "already_configured": "⚠️ Cet appareil est déjà configuré."
     }
   },
   "options": {
@@ -91,9 +73,6 @@
               "access_code": "🔑 Code d'Accès (Laisser vide pour le Mode Passif : 1 Analyse par heure)",
               "chlorine_model": "🧪 Traitement de l'Eau",
               "cya": "💧 Niveau de Stabilisant / CyA (mg/l)"
-            },
-            "data_description": {
-              "access_code": "Se trouve sur un autocollant sous le cache du port USB, ou sur le capuchon de protection des sondes. Nécessaire pour les analyses à la demande ; laissez vide pour une écoute uniquement passive."
             }
           },
           "synchronization": {
@@ -103,9 +82,6 @@
               "reference_time": "🕒 Heure de Référence (Planification)",
               "passive_measures": "📡 Analyses Internes du Blue Connect (Passives)",
               "ignore_echoes": "🚫 Ignorer les échos d'Analyses (Passives)"
-            },
-            "data_description": {
-              "reference_time": "Heure de référence utilisée pour aligner les analyses planifiées sur des créneaux réguliers (ex. 08:00, 10:00, 12:00... pour un intervalle de 2 heures)."
             }
           },
           "probes_calibration": {
@@ -118,10 +94,6 @@
               "orp_calib": "📏 Valeur ORP mesurée (ex : 650)",
               "orp_ref": "🎯 Cible de la solution ORP (ex : 650)",
               "temp_offset": "🌡️ Décalage Température (°C) (+/-)"
-            },
-            "data_description": {
-              "ph_calib_7": "La valeur de pH brute réellement mesurée par votre sonde une fois plongée dans cette solution de calibration (pas la valeur nominale de la solution).",
-              "ph_calib_4": "La valeur de pH brute réellement mesurée par votre sonde une fois plongée dans cette solution de calibration (pas la valeur nominale de la solution)."
             }
           },
           "alert_thresholds": {
@@ -306,12 +278,6 @@
       "reference_time": {
         "name": "Heure de Référence"
       }
-    }
-  },
-  "issues": {
-    "device_unreachable": {
-      "title": "Blue Connect injoignable",
-      "description": "La sonde Blue Connect ({name}) n'a pas répondu depuis {days} jour(s). Vérifiez l'alimentation, la portée, et qu'un adaptateur Bluetooth ou un proxy ESPHome couvre la zone de la piscine."
     }
   }
 }

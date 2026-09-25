@@ -25,9 +25,6 @@
               "reference_time": "🕒 Referentietijd (planning)",
               "passive_measures": "📡 Interne analyses van Blue Connect (passief)",
               "ignore_echoes": "🚫 Analyse-echo's negeren (passief)"
-            },
-            "data_description": {
-              "reference_time": "Referentietijd gebruikt om geplande analyses af te stemmen op regelmatige intervallen (bijv. 08:00, 10:00, 12:00... voor een interval van 2 uur)."
             }
           },
           "probes_calibration": {
@@ -40,22 +37,8 @@
               "orp_calib": "📏 Gemeten waarde ORP (bijv. 650)",
               "orp_ref": "🎯 Referentieoplossing ORP (bijv. 650)",
               "temp_offset": "🌡️ Temperatuurafwijking (°C) (+/-)"
-            },
-            "data_description": {
-              "ph_calib_7": "De ruwe pH-waarde die uw sonde daadwerkelijk heeft gemeten terwijl deze in deze kalibratieoplossing was ondergedompeld (niet de nominale waarde van de oplossing).",
-              "ph_calib_4": "De ruwe pH-waarde die uw sonde daadwerkelijk heeft gemeten terwijl deze in deze kalibratieoplossing was ondergedompeld (niet de nominale waarde van de oplossing)."
             }
           }
-        },
-        "data_description": {
-          "access_code": "Te vinden op een sticker onder het klepje van de USB-poort, of op de beschermkap van de sondes. Vereist voor analyses op aanvraag; laat leeg voor alleen passief luisteren."
-        }
-      },
-      "reauth_confirm": {
-        "title": "Blue Connect opnieuw verifiëren",
-        "description": "De toegangscode voor {name} is geweigerd. Voer de nieuwe toegangscode van 9 tekens in.",
-        "data": {
-          "access_code": "Toegangscode"
         }
       }
     },
@@ -74,8 +57,7 @@
       "invalid_access_code": "❌ Ongeldige toegangscode (9 alfanumerieke tekens)."
     },
     "abort": {
-      "already_configured": "⚠️ Dit apparaat is al geconfigureerd.",
-      "reauth_successful": "Herverificatie geslaagd"
+      "already_configured": "⚠️ Dit apparaat is al geconfigureerd."
     }
   },
   "options": {
@@ -91,9 +73,6 @@
               "access_code": "🔑 Toegangscode (leeg laten voor passieve modus: 1 analyse per uur)",
               "chlorine_model": "🧪 Waterbehandeling",
               "cya": "💧 Stabilisatorniveau / CyA (mg/l)"
-            },
-            "data_description": {
-              "access_code": "Te vinden op een sticker onder het klepje van de USB-poort, of op de beschermkap van de sondes. Vereist voor analyses op aanvraag; laat leeg voor alleen passief luisteren."
             }
           },
           "synchronization": {
@@ -103,9 +82,6 @@
               "reference_time": "🕒 Referentietijd (planning)",
               "passive_measures": "📡 Interne analyses van Blue Connect (passief)",
               "ignore_echoes": "🚫 Analyse-echo's negeren (passief)"
-            },
-            "data_description": {
-              "reference_time": "Referentietijd gebruikt om geplande analyses af te stemmen op regelmatige intervallen (bijv. 08:00, 10:00, 12:00... voor een interval van 2 uur)."
             }
           },
           "probes_calibration": {
@@ -118,10 +94,6 @@
               "orp_calib": "📏 Gemeten waarde ORP (bijv. 650)",
               "orp_ref": "🎯 Referentieoplossing ORP (bijv. 650)",
               "temp_offset": "🌡️ Temperatuurafwijking (°C) (+/-)"
-            },
-            "data_description": {
-              "ph_calib_7": "De ruwe pH-waarde die uw sonde daadwerkelijk heeft gemeten terwijl deze in deze kalibratieoplossing was ondergedompeld (niet de nominale waarde van de oplossing).",
-              "ph_calib_4": "De ruwe pH-waarde die uw sonde daadwerkelijk heeft gemeten terwijl deze in deze kalibratieoplossing was ondergedompeld (niet de nominale waarde van de oplossing)."
             }
           },
           "alert_thresholds": {
@@ -306,12 +278,6 @@
       "reference_time": {
         "name": "Referentietijd"
       }
-    }
-  },
-  "issues": {
-    "device_unreachable": {
-      "title": "Blue Connect onbereikbaar",
-      "description": "De Blue Connect-sonde ({name}) heeft {days} dag(en) niet gereageerd. Controleer de voeding, het bereik, en of een Bluetooth-adapter of ESPHome-proxy het zwembadgebied dekt."
     }
   }
 }

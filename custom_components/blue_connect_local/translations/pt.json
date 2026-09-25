@@ -25,9 +25,6 @@
               "reference_time": "🕒 Hora de Referência (Agendamento)",
               "passive_measures": "📡 Análises Internas do Blue Connect (Passivas)",
               "ignore_echoes": "🚫 Ignorar Ecos de Análise (Passivas)"
-            },
-            "data_description": {
-              "reference_time": "Hora de referência usada para alinhar as análises programadas em intervalos regulares (ex.: 08:00, 10:00, 12:00... para um intervalo de 2 horas)."
             }
           },
           "probes_calibration": {
@@ -40,22 +37,8 @@
               "orp_calib": "📏 Valor Medido ORP (ex.: 650)",
               "orp_ref": "🎯 Solução de Referência ORP (ex.: 650)",
               "temp_offset": "🌡️ Desvio de Temperatura (°C) (+/-)"
-            },
-            "data_description": {
-              "ph_calib_7": "O valor bruto de pH que a sua sonda mediu realmente enquanto estava imersa nesta solução de calibração (não o valor nominal da solução).",
-              "ph_calib_4": "O valor bruto de pH que a sua sonda mediu realmente enquanto estava imersa nesta solução de calibração (não o valor nominal da solução)."
             }
           }
-        },
-        "data_description": {
-          "access_code": "Encontra-se num autocolante sob a tampa da porta USB, ou na tampa de proteção das sondas. Necessário para análises sob demanda; deixe vazio para modo apenas passivo."
-        }
-      },
-      "reauth_confirm": {
-        "title": "Reautenticar Blue Connect",
-        "description": "O código de acesso de {name} foi rejeitado. Introduza o novo código de acesso de 9 caracteres.",
-        "data": {
-          "access_code": "Código de Acesso"
         }
       }
     },
@@ -74,8 +57,7 @@
       "invalid_access_code": "❌ Código de Acesso inválido (9 caracteres alfanuméricos)."
     },
     "abort": {
-      "already_configured": "⚠️ Este dispositivo já está configurado.",
-      "reauth_successful": "A reautenticação foi bem-sucedida"
+      "already_configured": "⚠️ Este dispositivo já está configurado."
     }
   },
   "options": {
@@ -91,9 +73,6 @@
               "access_code": "🔑 Código de Acesso (deixe em branco para o Modo Passivo: 1 análise por hora)",
               "chlorine_model": "🧪 Tratamento da Água",
               "cya": "💧 Nível de Estabilizante / CyA (mg/l)"
-            },
-            "data_description": {
-              "access_code": "Encontra-se num autocolante sob a tampa da porta USB, ou na tampa de proteção das sondas. Necessário para análises sob demanda; deixe vazio para modo apenas passivo."
             }
           },
           "synchronization": {
@@ -103,9 +82,6 @@
               "reference_time": "🕒 Hora de Referência (Agendamento)",
               "passive_measures": "📡 Análises Internas do Blue Connect (Passivas)",
               "ignore_echoes": "🚫 Ignorar Ecos de Análise (Passivas)"
-            },
-            "data_description": {
-              "reference_time": "Hora de referência usada para alinhar as análises programadas em intervalos regulares (ex.: 08:00, 10:00, 12:00... para um intervalo de 2 horas)."
             }
           },
           "probes_calibration": {
@@ -118,10 +94,6 @@
               "orp_calib": "📏 Valor Medido ORP (ex.: 650)",
               "orp_ref": "🎯 Solução de Referência ORP (ex.: 650)",
               "temp_offset": "🌡️ Desvio de Temperatura (°C) (+/-)"
-            },
-            "data_description": {
-              "ph_calib_7": "O valor bruto de pH que a sua sonda mediu realmente enquanto estava imersa nesta solução de calibração (não o valor nominal da solução).",
-              "ph_calib_4": "O valor bruto de pH que a sua sonda mediu realmente enquanto estava imersa nesta solução de calibração (não o valor nominal da solução)."
             }
           },
           "alert_thresholds": {
@@ -306,12 +278,6 @@
       "reference_time": {
         "name": "Hora de Referência"
       }
-    }
-  },
-  "issues": {
-    "device_unreachable": {
-      "title": "Blue Connect inacessível",
-      "description": "A sonda Blue Connect ({name}) não responde há {days} dia(s). Verifique a alimentação, o alcance, e se um adaptador Bluetooth ou proxy ESPHome cobre a área da piscina."
     }
   }
 }

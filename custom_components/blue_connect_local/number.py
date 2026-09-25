@@ -18,6 +18,7 @@ from .const import (
     CONF_TAC,
     CONF_TDS,
     CONF_TH,
+    DOMAIN,
     blue_connect_device_info,
     get_blue_connect_model,
 )
@@ -28,7 +29,7 @@ _LOGGER = logging.getLogger(__name__)
 async def async_setup_entry(
     hass: HomeAssistant, entry: ConfigEntry, async_add_entities: AddEntitiesCallback
 ) -> None:
-    coordinator = entry.runtime_data
+    coordinator = hass.data[DOMAIN][entry.entry_id]
     mac = entry.data[CONF_MAC_ADDRESS]
     entry_id = entry.entry_id
     sku = coordinator.data.get("sku")

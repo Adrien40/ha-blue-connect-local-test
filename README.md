@@ -107,13 +107,6 @@ This repository isn't (yet) in the official default list, so you'll need to add 
 ### Manual
 Copy the `custom_components/blue_connect_local` folder into the `custom_components` folder of your Home Assistant configuration, then restart.
 
-### 🗑️ Removal
-1. Go to **Settings** > **Devices & Services**, find your Blue Connect device, click the 3 dots and select **Delete**. This removes all entities and stops the Bluetooth polling/listening.
-2. If installed via HACS: open **HACS**, find **Blue Connect Local**, click the 3 dots and select **Remove**.
-3. If installed manually: delete the `custom_components/blue_connect_local` folder, then restart Home Assistant.
-
-Removing the integration also deletes its locally stored history (last known values, calibration reference points, access code). If you only want to pause measurements without losing this data, use the **Automatic Analysis** switch instead of deleting the integration.
-
 ---
 
 ### 📊 Available Sensors and Controls
@@ -186,62 +179,9 @@ Once the device has been added, you can click **Configure** ⚙️ to:
 <summary>⚠️ See common issues</summary>
   
 * **Frequent Bluetooth errors**: The integration automatically handles connection retries. If the sensor shows `Signal Lost`, the Blue Connect is out of range. Move your antenna closer, or [install an ESPHome Bluetooth Proxy](https://esphome.github.io/bluetooth-proxies/) as close to the pool as possible (all you need is an ESP32 (~€10) and a USB charger).
-* **Invalid access code**: The integration checks your access code as soon as it connects, so if it's wrong you'll see `Invalid access code` on the Bluetooth State sensor within seconds — no need to wait for the full analysis timeout. Home Assistant will also prompt you to re-enter it via a **Re-authenticate** notification; you can also fix it manually in **Configure ⚙️**, which triggers a new analysis automatically once you save.
+* **Invalid access code**: The integration checks your access code as soon as it connects, so if it's wrong you'll see `Invalid access code` on the Bluetooth State sensor within seconds — no need to wait for the full analysis timeout. Just correct it in **Configure ⚙️**, an analysis is triggered automatically once you save.
 
 </details>
-
-### 🎯 Use Cases
-* **Pool safety automation**: trigger a notification or turn off the filtration pump if pH or ORP drifts outside your safe range, using the `pH Status` / `ORP Redox Status` binary sensors.
-* **Freeze protection**: combine the `Temperature Status` binary sensor with a heater or cover automation when winter temperatures approach freezing.
-* **Chemical dosing reminders**: use the Langelier Index Status sensor to get notified when your water becomes corrosive or scale-forming, before it damages your equipment.
-* **Passive-only monitoring**: without an access code, Blue Connect Local still gives you hourly readings from the probe's own broadcasts — useful if you don't want or need on-demand analyses.
-
-### 🤖 Automation Examples
-
-<details>
-<summary>📋 Notify when pH goes out of range</summary>
-
-```yaml
-automation:
-  - alias: "Pool pH out of range"
-    trigger:
-      - platform: state
-        entity_id: binary_sensor.blue_connect_ph_status
-        to: "on"
-    action:
-      - service: notify.mobile_app_your_phone
-        data:
-          title: "⚠️ Pool pH alert"
-          message: "pH is currently {{ states('sensor.blue_connect_ph') }}, outside the configured range."
-```
-</details>
-
-<details>
-<summary>📋 Alert if the probe has not reported in a while</summary>
-
-```yaml
-automation:
-  - alias: "Blue Connect unreachable too long"
-    trigger:
-      - platform: event
-        event_type: repairs_issue_registry_updated
-        event_data:
-          action: create
-          domain: blue_connect_local
-    action:
-      - service: notify.mobile_app_your_phone
-        data:
-          title: "🔌 Blue Connect unreachable"
-          message: "The Blue Connect probe hasn't responded in a while. Check its battery and Bluetooth range."
-```
-</details>
-
-### ⚠️ Known Limitations
-* **Bluetooth range**: like any BLE device, Blue Connect needs to stay within range of a Bluetooth adapter or [ESPHome proxy](https://esphome.github.io/bluetooth-proxies/). Thick pool covers, distance, and metal structures can weaken the signal.
-* **No push notifications from the probe**: on-demand analyses aside, data is refreshed on the configured polling interval, not a live continuous stream.
-* **ORP is not a chlorine measurement**: see *Why there is no chlorine sensor* below. Use the raw ORP value with your own thresholds and a manual test kit for actual chlorine levels.
-* **One probe per config entry**: if you own multiple Blue Connect units, add each one as a separate integration entry.
-* **Blueriiot hardware is not supported**, only genuine ZODIAC Blue Connect Gold/Silver.
 
 ---
 

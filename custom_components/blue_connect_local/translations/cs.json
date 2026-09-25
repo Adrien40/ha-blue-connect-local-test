@@ -25,9 +25,6 @@
               "reference_time": "🕒 Referenční čas (plánování)",
               "passive_measures": "📡 Interní analýzy Blue Connect (pasivní)",
               "ignore_echoes": "🚫 Ignorovat ozvěny analýz (pasivní)"
-            },
-            "data_description": {
-              "reference_time": "Referenční čas pro zarovnání naplánovaných analýz na pravidelné intervaly (např. 08:00, 10:00, 12:00... pro 2hodinový interval)."
             }
           },
           "probes_calibration": {
@@ -40,22 +37,8 @@
               "orp_calib": "📏 Naměřená hodnota ORP (např. 650)",
               "orp_ref": "🎯 Cílový roztok ORP (např. 650)",
               "temp_offset": "🌡️ Teplotní odchylka (°C) (+/-)"
-            },
-            "data_description": {
-              "ph_calib_7": "Skutečná hodnota pH naměřená sondou po ponoření do tohoto kalibračního roztoku (ne nominální hodnota roztoku).",
-              "ph_calib_4": "Skutečná hodnota pH naměřená sondou po ponoření do tohoto kalibračního roztoku (ne nominální hodnota roztoku)."
             }
           }
-        },
-        "data_description": {
-          "access_code": "Naleznete na štítku pod krytem USB portu nebo na ochranném krytu sond. Vyžadováno pro analýzy na vyžádání; ponechte prázdné pro pouze pasivní naslouchání."
-        }
-      },
-      "reauth_confirm": {
-        "title": "Znovu ověřit Blue Connect",
-        "description": "Přístupový kód pro {name} byl odmítnut. Zadejte nový 9místný přístupový kód.",
-        "data": {
-          "access_code": "Přístupový kód"
         }
       }
     },
@@ -74,8 +57,7 @@
       "invalid_access_code": "❌ Neplatný přístupový kód (9 alfanumerických znaků)."
     },
     "abort": {
-      "already_configured": "⚠️ Toto zařízení je již nakonfigurováno.",
-      "reauth_successful": "Opětovné ověření bylo úspěšné"
+      "already_configured": "⚠️ Toto zařízení je již nakonfigurováno."
     }
   },
   "options": {
@@ -91,9 +73,6 @@
               "access_code": "🔑 Přístupový kód (ponechte prázdné pro pasivní režim: 1 analýza za hodinu)",
               "chlorine_model": "🧪 Úprava vody",
               "cya": "💧 Úroveň stabilizátoru / CyA (mg/l)"
-            },
-            "data_description": {
-              "access_code": "Naleznete na štítku pod krytem USB portu nebo na ochranném krytu sond. Vyžadováno pro analýzy na vyžádání; ponechte prázdné pro pouze pasivní naslouchání."
             }
           },
           "synchronization": {
@@ -103,9 +82,6 @@
               "reference_time": "🕒 Referenční čas (plánování)",
               "passive_measures": "📡 Interní analýzy Blue Connect (pasivní)",
               "ignore_echoes": "🚫 Ignorovat ozvěny analýz (pasivní)"
-            },
-            "data_description": {
-              "reference_time": "Referenční čas pro zarovnání naplánovaných analýz na pravidelné intervaly (např. 08:00, 10:00, 12:00... pro 2hodinový interval)."
             }
           },
           "probes_calibration": {
@@ -118,10 +94,6 @@
               "orp_calib": "📏 Naměřená hodnota ORP (např. 650)",
               "orp_ref": "🎯 Cílový roztok ORP (např. 650)",
               "temp_offset": "🌡️ Teplotní odchylka (°C) (+/-)"
-            },
-            "data_description": {
-              "ph_calib_7": "Skutečná hodnota pH naměřená sondou po ponoření do tohoto kalibračního roztoku (ne nominální hodnota roztoku).",
-              "ph_calib_4": "Skutečná hodnota pH naměřená sondou po ponoření do tohoto kalibračního roztoku (ne nominální hodnota roztoku)."
             }
           },
           "alert_thresholds": {
@@ -306,12 +278,6 @@
       "reference_time": {
         "name": "Referenční čas"
       }
-    }
-  },
-  "issues": {
-    "device_unreachable": {
-      "title": "Blue Connect nedostupný",
-      "description": "Sonda Blue Connect ({name}) neodpověděla {days} den/dní. Zkontrolujte napájení, dosah a pokrytí bazénu Bluetooth adaptérem nebo ESPHome proxy."
     }
   }
 }

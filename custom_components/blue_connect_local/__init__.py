@@ -13,12 +13,8 @@ from .coordinator import BlueConnectCoordinator, format_mac_safe, store_key
 
 _LOGGER = logging.getLogger(__name__)
 
-type BlueConnectConfigEntry = ConfigEntry[BlueConnectCoordinator]
 
-
-async def async_migrate_entry(
-    hass: HomeAssistant, entry: BlueConnectConfigEntry
-) -> bool:
+async def async_migrate_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     _LOGGER.debug(
         "Checking Blue Connect entry %s.%s for migration",
         entry.version,
@@ -113,7 +109,9 @@ async def async_migrate_entry(
     return True
 
 
-async def async_setup_entry(hass: HomeAssistant, entry: BlueConnectConfigEntry) -> bool:
+async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
+    hass.data.setdefault(DOMAIN, {})
+
     mac = entry.data[CONF_MAC_ADDRESS]
     safe_mac = format_mac_safe(mac)
 
@@ -124,29 +122,28 @@ async def async_setup_entry(hass: HomeAssistant, entry: BlueConnectConfigEntry) 
     coordinator = BlueConnectCoordinator(hass, entry, mac, safe_mac, access_code)
     await coordinator.async_initialize()
 
-    entry.runtime_data = coordinator
+    hass.data[DOMAIN][entry.entry_id] = coordinator
 
     await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
 
     return True
 
 
-async def async_unload_entry(
-    hass: HomeAssistant, entry: BlueConnectConfigEntry
-) -> bool:
+async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     ok = await hass.config_entries.async_unload_platforms(entry, PLATFORMS)
 
     if ok:
-        coordinator = entry.runtime_data
+        coordinator: BlueConnectCoordinator | None = hass.data[DOMAIN].get(
+            entry.entry_id
+        )
         if coordinator:
             await coordinator.async_shutdown()
+        hass.data[DOMAIN].pop(entry.entry_id, None)
 
     return ok
 
 
-async def async_remove_entry(
-    hass: HomeAssistant, entry: BlueConnectConfigEntry
-) -> None:
+async def async_remove_entry(hass: HomeAssistant, entry: ConfigEntry) -> None:
     mac = entry.data.get(CONF_MAC_ADDRESS)
     if mac:
         store = Store(hass, 1, store_key(mac))

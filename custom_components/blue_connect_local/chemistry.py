@@ -60,15 +60,9 @@ def compute_ph_equilibrium(
 def compute_ph_calibrated(
     ph_raw: float, c4_meas: float, c7_meas: float, ref_4: float, ref_7: float
 ) -> float:
-    """pH calibrated via the line through the two calibration points.
-
-    Raises ValueError if the calibration is degenerate (measured points
-    coincide, or zero slope): silently returning the raw pH or `ref_7` would
-    mask a miscalibration made by the user.
-    """
     if abs(c7_meas - c4_meas) < 0.01:
-        raise ValueError("Degenerate pH calibration")
+        return ph_raw
     slope = (ref_7 - ref_4) / (c7_meas - c4_meas)
     if abs(slope) < 1e-9:
-        raise ValueError("Degenerate pH calibration")
+        return ref_7
     return ref_7 + (ph_raw - c7_meas) * slope

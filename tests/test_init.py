@@ -1,4 +1,4 @@
-"""Setup, unload, removal, and the 1.1 -> 1.4 migration chain."""
+"""Installation, déchargement, suppression et chaîne de migration 1.1 → 1.4."""
 
 from __future__ import annotations
 
@@ -83,13 +83,14 @@ async def test_setup_creates_the_expected_entities(hass, entry, coordinator):
 
 async def test_entry_loaded_and_coordinator_registered(hass, entry, coordinator):
     assert entry.state is ConfigEntryState.LOADED
-    assert entry.runtime_data is coordinator
+    assert hass.data[DOMAIN][entry.entry_id] is coordinator
 
 
 async def test_unload(hass, entry, coordinator):
     assert await hass.config_entries.async_unload(entry.entry_id)
     await hass.async_block_till_done()
     assert entry.state is ConfigEntryState.NOT_LOADED
+    assert entry.entry_id not in hass.data[DOMAIN]
     assert coordinator.is_shutdown is True
 
 
@@ -119,7 +120,7 @@ async def test_passive_only_setup(hass, setup_integration):
 
 
 # ---------------------------------------------------------------------------
-# Migration chain
+# Chaîne de migration
 # ---------------------------------------------------------------------------
 async def test_migration_1_1_drops_stale_model_field(hass, setup_integration):
     entry = make_entry(minor_version=1)
@@ -142,11 +143,13 @@ async def test_migration_removes_orphaned_serial_and_hw_version(
     await setup_integration(entry)
     assert reg.async_get_entity_id("sensor", DOMAIN, f"{MAC}_serial_number") is None
     assert reg.async_get_entity_id("sensor", DOMAIN, f"{MAC}_hw_version") is None
-    assert reg.async_get_entity_id("sensor", DOMAIN, f"{MAC}_ph") is not None  # kept
+    assert (
+        reg.async_get_entity_id("sensor", DOMAIN, f"{MAC}_ph") is not None
+    )  # conservé
 
 
 async def test_migration_renames_sw_version_in_place(hass, setup_integration):
-    """The entity is renamed (unique_id) without losing its entity_id or history."""
+    """L'entité est renommée (unique_id) sans perdre son entity_id ni son historique."""
     entry = make_entry(minor_version=3)
     entry.add_to_hass(hass)
     reg = er.async_get(hass)

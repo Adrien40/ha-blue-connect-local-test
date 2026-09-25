@@ -1,30 +1,5 @@
 # Changelog
 
-## 1.2.1
-
-### Fixed
-- `compute_ph_calibrated` silently returned the raw pH (or `ref_7`) on a
-  degenerate calibration (measured points too close together) instead of
-  signaling it. It now raises, and the coordinator falls back to the raw pH
-  with a logged warning, matching the "Degenerate pH calibration" handling
-  already used by Flipr Local.
-- A notification dropped because the queue was full (`maxsize=4`) was
-  silently ignored. It is now logged at debug level.
-- BLE signal lost/found events were not logged (Flipr Local already logged
-  them). Added matching debug logs, including the distinction between a
-  fresh signal loss and recovery from a stale `out_of_range` status.
-- The "New analysis" button only caught `HomeAssistantError` and
-  `RuntimeError` around the background refresh, unlike Flipr Local which
-  catches any exception. Widened to `Exception` so an unexpected error type
-  still gets a clean logged message instead of an unhandled background-task
-  traceback.
-- When the Bluetooth signal was unavailable, the coordinator skipped the
-  connection attempt silently. Now logs a debug message, matching Flipr Local.
-- The device lookup only tried `connectable=True` before giving up. It now
-  falls back to `connectable=False` first, matching Flipr Local: a device
-  seen only by a scanner that cannot connect to it directly is no longer
-  treated as missing.
-
 ## 1.2.0
 
 ### Requirements (breaking)

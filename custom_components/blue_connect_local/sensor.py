@@ -42,6 +42,7 @@ from .const import (
     BT_STATUS_WAITING,
     BT_STATUS_WRITE_FAILED,
     CONF_MAC_ADDRESS,
+    DOMAIN,
     blue_connect_device_info,
     get_blue_connect_model,
     model_has_conductivity,
@@ -54,7 +55,7 @@ _LOGGER = logging.getLogger(__name__)
 async def async_setup_entry(
     hass: HomeAssistant, entry: ConfigEntry, async_add_entities: AddEntitiesCallback
 ) -> None:
-    coordinator = entry.runtime_data
+    coordinator = hass.data[DOMAIN][entry.entry_id]
     mac_address = entry.data[CONF_MAC_ADDRESS]
     sku = coordinator.data.get("sku")
     has_conductivity = coordinator.data.get("has_conductivity")

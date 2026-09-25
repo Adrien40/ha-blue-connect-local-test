@@ -1,4 +1,4 @@
-"""Entities: sensors (including raw Redox), alerts, numbers, switches, button."""
+"""Entités : capteurs (dont le Redox brut), alertes, nombres, interrupteurs, bouton."""
 
 from __future__ import annotations
 
@@ -74,7 +74,7 @@ async def test_measurement_sensors(hass, coordinator):
 async def test_raw_orp_is_not_affected_by_calibration_offset(
     hass, setup_integration, ble
 ):
-    """Raw Redox is used to *establish* the offset: it stays the probe's value."""
+    """Le Redox brut sert à *établir* le décalage : il reste la valeur de la sonde."""
     ble.client = FakeBlueClient([build_frame(orp_mv=700)])
     coord = await setup_integration(
         make_entry(**{CONF_ORP_CALIB: 640, CONF_ORP_REF: 650})
@@ -216,7 +216,7 @@ async def test_cya_unavailable_with_bromine(hass, coordinator):
 
 
 async def test_cya_survives_unrelated_setting_changes(hass, coordinator):
-    """CyA and treatment type are kept: another setting must not overwrite them."""
+    """CyA et type de traitement sont conservés : un autre réglage ne doit pas les écraser."""
     cya = entity_id(hass, "number", "cya")
     await _call(hass, "number", "set_value", cya, value=80)
     coordinator.update_local_state({CONF_CHLORINE_MODEL: "bromine"})
@@ -227,7 +227,7 @@ async def test_cya_survives_unrelated_setting_changes(hass, coordinator):
 
 
 # ---------------------------------------------------------------------------
-# Switches, reference time, button
+# Interrupteurs, heure de référence, bouton
 # ---------------------------------------------------------------------------
 async def test_active_measures_switch(hass, coordinator):
     switch = entity_id(hass, "switch", "active_measures")
@@ -250,7 +250,7 @@ async def test_active_measures_resume_without_bluetooth(hass, coordinator, ble):
 
 async def test_passive_measures_switch(hass, coordinator):
     switch = entity_id(hass, "switch", "passive_measures")
-    assert hass.states.get(switch).state == STATE_ON  # enabled by default
+    assert hass.states.get(switch).state == STATE_ON  # activé par défaut
     await _call(hass, "switch", "turn_off", switch)
     assert coordinator.data[CONF_PASSIVE_MEASURES] is False
     assert hass.states.get(switch).state == STATE_OFF
@@ -291,15 +291,6 @@ async def test_button_ignored_while_analysis_running(hass, coordinator):
 
 async def test_button_swallows_refresh_errors(hass, coordinator):
     coordinator.async_request_refresh = AsyncMock(side_effect=RuntimeError("boom"))
-    await _call(hass, "button", "press", entity_id(hass, "button", "force_analysis"))
-    await hass.async_block_till_done(wait_background_tasks=True)
-    assert coordinator.data["action_running"] is False
-
-
-async def test_button_swallows_unexpected_error_types(hass, coordinator):
-    # KeyError is neither HomeAssistantError nor RuntimeError: this is exactly
-    # what the narrower except clause used to miss.
-    coordinator.async_request_refresh = AsyncMock(side_effect=KeyError("unexpected"))
     await _call(hass, "button", "press", entity_id(hass, "button", "force_analysis"))
     await hass.async_block_till_done(wait_background_tasks=True)
     assert coordinator.data["action_running"] is False

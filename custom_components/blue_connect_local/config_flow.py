@@ -112,30 +112,6 @@ class BlueConnectConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
 
         return await self.async_step_user()
 
-    async def async_step_reauth(self, entry_data: dict) -> config_entries.FlowResult:
-        """Triggered when the stored access code is rejected by the device."""
-        return await self.async_step_reauth_confirm()
-
-    async def async_step_reauth_confirm(
-        self, user_input=None
-    ) -> config_entries.FlowResult:
-        errors: dict[str, str] = {}
-        reauth_entry = self._get_reauth_entry()
-
-        if user_input is not None:
-            access_code = user_input[CONF_ACCESS_CODE].strip()
-            return self.async_update_reload_and_abort(
-                reauth_entry,
-                data={**reauth_entry.data, CONF_ACCESS_CODE: access_code},
-            )
-
-        return self.async_show_form(
-            step_id="reauth_confirm",
-            data_schema=vol.Schema({vol.Required(CONF_ACCESS_CODE): str}),
-            description_placeholders={"name": reauth_entry.title},
-            errors=errors,
-        )
-
     async def async_step_user(self, user_input=None) -> config_entries.FlowResult:
         errors: dict[str, str] = {}
 
@@ -468,7 +444,7 @@ class BlueConnectOptionsFlowHandler(config_entries.OptionsFlow):
                     normalized_input = validation
                     normalized_input[CONF_ACCESS_CODE] = access_code
 
-                    coordinator = getattr(entry, "runtime_data", None)
+                    coordinator = self.hass.data.get(DOMAIN, {}).get(entry.entry_id)
                     if coordinator:
                         coordinator.update_local_state(normalized_input)
                         coordinator.request_deferred_recompute()
@@ -483,7 +459,7 @@ class BlueConnectOptionsFlowHandler(config_entries.OptionsFlow):
 
                     return self.async_create_entry(title="", data=normalized_input)
 
-        coordinator = getattr(entry, "runtime_data", None)
+        coordinator = self.hass.data.get(DOMAIN, {}).get(entry.entry_id)
 
         cya_coord = (
             coordinator.data.get(CONF_CYA) if coordinator and coordinator.data else None
