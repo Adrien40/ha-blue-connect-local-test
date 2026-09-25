@@ -13,6 +13,8 @@ from .coordinator import BlueConnectCoordinator, format_mac_safe, store_key
 
 _LOGGER = logging.getLogger(__name__)
 
+type BlueConnectConfigEntry = ConfigEntry[BlueConnectCoordinator]
+
 
 async def async_migrate_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     _LOGGER.debug(
