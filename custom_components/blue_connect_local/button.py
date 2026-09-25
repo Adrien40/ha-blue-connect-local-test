@@ -7,13 +7,11 @@ import logging
 from homeassistant.components.button import ButtonEntity
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
-from homeassistant.exceptions import HomeAssistantError
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
 from .const import (
     CONF_MAC_ADDRESS,
-    DOMAIN,
     TIMEOUT_FORCE_REFRESH,
     blue_connect_device_info,
     get_blue_connect_model,
@@ -22,10 +20,14 @@ from .const import (
 _LOGGER = logging.getLogger(__name__)
 
 
+# Single Bluetooth connection to the device: commands must be serialized.
+PARALLEL_UPDATES = 1
+
+
 async def async_setup_entry(
     hass: HomeAssistant, entry: ConfigEntry, async_add_entities: AddEntitiesCallback
 ) -> None:
-    coordinator = hass.data[DOMAIN][entry.entry_id]
+    coordinator = entry.runtime_data
     mac = entry.data[CONF_MAC_ADDRESS]
     sku = coordinator.data.get("sku")
     has_conductivity = coordinator.data.get("has_conductivity")
@@ -42,7 +44,6 @@ class BlueConnectForceAnalysisButton(CoordinatorEntity, ButtonEntity):
         super().__init__(coordinator)
         self._mac = mac
         self._attr_unique_id = f"{mac}_force_analysis"
-        self._attr_icon = "mdi:refresh-circle"
         self._attr_device_info = blue_connect_device_info(
             mac,
             model_name,
@@ -91,8 +92,7 @@ class BlueConnectForceAnalysisButton(CoordinatorEntity, ButtonEntity):
                     TIMEOUT_FORCE_REFRESH,
                     self.coordinator.safe_mac,
                 )
-            # PEP 758 (Python 3.14): parentheses are optional when there is no `as` clause. Intentional.
-            except HomeAssistantError, RuntimeError:
+            except Exception:
                 _LOGGER.exception(
                     "Analysis failed for %s",
                     self.coordinator.safe_mac,

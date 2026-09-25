@@ -16,7 +16,6 @@ from .const import (
     BT_STATUS_WAITING,
     CONF_MAC_ADDRESS,
     CONF_PASSIVE_MEASURES,
-    DOMAIN,
     blue_connect_device_info,
     get_blue_connect_model,
 )
@@ -24,10 +23,14 @@ from .const import (
 _LOGGER = logging.getLogger(__name__)
 
 
+# Single Bluetooth connection to the device: commands must be serialized.
+PARALLEL_UPDATES = 1
+
+
 async def async_setup_entry(
     hass: HomeAssistant, entry: ConfigEntry, async_add_entities: AddEntitiesCallback
 ) -> None:
-    coordinator = hass.data[DOMAIN][entry.entry_id]
+    coordinator = entry.runtime_data
     mac = entry.data[CONF_MAC_ADDRESS]
     entry_id = entry.entry_id
     sku = coordinator.data.get("sku")
@@ -45,7 +48,6 @@ async def async_setup_entry(
 class BlueConnectActiveMeasuresSwitch(CoordinatorEntity, SwitchEntity):
     _attr_has_entity_name = True
     _attr_translation_key = "active_measures"
-    _attr_icon = "mdi:clock-check-outline"
     _attr_entity_category = EntityCategory.CONFIG
 
     def __init__(self, coordinator, mac: str, model_name: str, entry_id: str) -> None:
@@ -101,7 +103,6 @@ class BlueConnectActiveMeasuresSwitch(CoordinatorEntity, SwitchEntity):
 class BlueConnectPassiveMeasuresSwitch(CoordinatorEntity, SwitchEntity):
     _attr_has_entity_name = True
     _attr_translation_key = "passive_measures"
-    _attr_icon = "mdi:bluetooth-connect"
     _attr_entity_category = EntityCategory.CONFIG
 
     def __init__(self, coordinator, mac: str, model_name: str, entry_id: str) -> None:

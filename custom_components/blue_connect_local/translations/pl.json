@@ -25,6 +25,9 @@
               "reference_time": "🕒 Czas odniesienia (harmonogram)",
               "passive_measures": "📡 Wewnętrzne analizy Blue Connect (pasywne)",
               "ignore_echoes": "🚫 Ignoruj echa analiz (pasywne)"
+            },
+            "data_description": {
+              "reference_time": "Czas odniesienia używany do dopasowania zaplanowanych analiz do regularnych interwałów (np. 08:00, 10:00, 12:00... dla interwału 2-godzinnego)."
             }
           },
           "probes_calibration": {
@@ -37,8 +40,30 @@
               "orp_calib": "📏 Zmierzona wartość ORP (np. 650)",
               "orp_ref": "🎯 Roztwór wzorcowy ORP (np. 650)",
               "temp_offset": "🌡️ Przesunięcie temperatury (°C) (+/-)"
+            },
+            "data_description": {
+              "ph_calib_7": "Surowa wartość pH rzeczywiście zmierzona przez sondę podczas zanurzenia w tym roztworze kalibracyjnym (nie wartość nominalna roztworu).",
+              "ph_calib_4": "Surowa wartość pH rzeczywiście zmierzona przez sondę podczas zanurzenia w tym roztworze kalibracyjnym (nie wartość nominalna roztworu)."
             }
           }
+        },
+        "data_description": {
+          "access_code": "Znajduje się na naklejce pod pokrywą portu USB lub na osłonie ochronnej sond. Wymagane do analiz na żądanie; pozostaw puste dla trybu wyłącznie pasywnego."
+        }
+      },
+      "reauth_confirm": {
+        "title": "Ponowne uwierzytelnienie Blue Connect",
+        "description": "Kod dostępu dla {name} został odrzucony. Wprowadź nowy 9-znakowy kod dostępu.",
+        "data": {
+          "access_code": "Kod Dostępu"
+        }
+      },
+      "reconfigure": {
+        "title": "Zaktualizuj urządzenie Blue Connect",
+        "description": "Powiąż ten wpis z innym fizycznym Blue Connect (np. po wymianie urządzenia), lub popraw kod dostępu. Twoje opcje, automatyzacje i historia encji zostają zachowane.",
+        "data": {
+          "mac_address": "✍️ Adres MAC Bluetooth",
+          "access_code": "🔑 Kod Dostępu"
         }
       }
     },
@@ -57,7 +82,8 @@
       "invalid_access_code": "❌ Nieprawidłowy kod dostępu (9 znaków alfanumerycznych)."
     },
     "abort": {
-      "already_configured": "⚠️ To urządzenie jest już skonfigurowane."
+      "already_configured": "⚠️ To urządzenie jest już skonfigurowane.",
+      "reauth_successful": "Ponowne uwierzytelnienie powiodło się"
     }
   },
   "options": {
@@ -73,6 +99,9 @@
               "access_code": "🔑 Kod dostępu (pozostaw puste dla trybu pasywnego: 1 analiza na godzinę)",
               "chlorine_model": "🧪 Uzdatnianie wody",
               "cya": "💧 Poziom stabilizatora / CyA (mg/l)"
+            },
+            "data_description": {
+              "access_code": "Znajduje się na naklejce pod pokrywą portu USB lub na osłonie ochronnej sond. Wymagane do analiz na żądanie; pozostaw puste dla trybu wyłącznie pasywnego."
             }
           },
           "synchronization": {
@@ -82,6 +111,9 @@
               "reference_time": "🕒 Czas odniesienia (harmonogram)",
               "passive_measures": "📡 Wewnętrzne analizy Blue Connect (pasywne)",
               "ignore_echoes": "🚫 Ignoruj echa analiz (pasywne)"
+            },
+            "data_description": {
+              "reference_time": "Czas odniesienia używany do dopasowania zaplanowanych analiz do regularnych interwałów (np. 08:00, 10:00, 12:00... dla interwału 2-godzinnego)."
             }
           },
           "probes_calibration": {
@@ -94,6 +126,10 @@
               "orp_calib": "📏 Zmierzona wartość ORP (np. 650)",
               "orp_ref": "🎯 Roztwór wzorcowy ORP (np. 650)",
               "temp_offset": "🌡️ Przesunięcie temperatury (°C) (+/-)"
+            },
+            "data_description": {
+              "ph_calib_7": "Surowa wartość pH rzeczywiście zmierzona przez sondę podczas zanurzenia w tym roztworze kalibracyjnym (nie wartość nominalna roztworu).",
+              "ph_calib_4": "Surowa wartość pH rzeczywiście zmierzona przez sondę podczas zanurzenia w tym roztworze kalibracyjnym (nie wartość nominalna roztworu)."
             }
           },
           "alert_thresholds": {
@@ -278,6 +314,20 @@
       "reference_time": {
         "name": "Czas odniesienia"
       }
+    }
+  },
+  "issues": {
+    "device_unreachable": {
+      "title": "Blue Connect niedostępny",
+      "description": "Sonda Blue Connect ({name}) nie odpowiada od {days} dni. Sprawdź zasilanie, zasięg oraz czy adapter Bluetooth lub proxy ESPHome obejmuje obszar basenu."
+    }
+  },
+  "exceptions": {
+    "out_of_range_no_history": {
+      "message": "Blue Connect {mac} jest poza zasięgiem Bluetooth i brak wcześniejszych danych."
+    },
+    "unreachable_no_history": {
+      "message": "Blue Connect jest niedostępny i brak wcześniejszych danych: {error}"
     }
   }
 }

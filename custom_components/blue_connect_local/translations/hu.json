@@ -25,6 +25,9 @@
               "reference_time": "🕒 Referenciaidő (ütemezés)",
               "passive_measures": "📡 Blue Connect belső elemzései (passzív)",
               "ignore_echoes": "🚫 Elemzési visszhangok figyelmen kívül hagyása (passzív)"
+            },
+            "data_description": {
+              "reference_time": "Viszonyítási idő az ütemezett elemzések rendszeres időközökre igazításához (pl. 08:00, 10:00, 12:00... 2 órás intervallum esetén)."
             }
           },
           "probes_calibration": {
@@ -37,8 +40,30 @@
               "orp_calib": "📏 Mért érték ORP (pl. 650)",
               "orp_ref": "🎯 Célértékű oldat ORP (pl. 650)",
               "temp_offset": "🌡️ Hőmérséklet-eltolás (°C) (+/-)"
+            },
+            "data_description": {
+              "ph_calib_7": "A szonda által ténylegesen mért nyers pH-érték, amíg ebben a kalibráló oldatban volt (nem az oldat névleges értéke).",
+              "ph_calib_4": "A szonda által ténylegesen mért nyers pH-érték, amíg ebben a kalibráló oldatban volt (nem az oldat névleges értéke)."
             }
           }
+        },
+        "data_description": {
+          "access_code": "Az USB port fedele alatti matricán vagy a szondák védősapkáján található. Igény szerinti elemzésekhez szükséges; hagyja üresen csak passzív figyeléshez."
+        }
+      },
+      "reauth_confirm": {
+        "title": "Blue Connect újrahitelesítése",
+        "description": "A(z) {name} hozzáférési kódja elutasításra került. Adja meg az új 9 karakteres hozzáférési kódot.",
+        "data": {
+          "access_code": "Hozzáférési Kód"
+        }
+      },
+      "reconfigure": {
+        "title": "Blue Connect eszköz frissítése",
+        "description": "Irányítsa ezt a bejegyzést egy másik fizikai Blue Connect eszközre (pl. eszközcsere után), vagy javítsa ki a hozzáférési kódot. A beállítások, automatizálások és az entitáselőzmények megmaradnak.",
+        "data": {
+          "mac_address": "✍️ Bluetooth MAC-cím",
+          "access_code": "🔑 Hozzáférési Kód"
         }
       }
     },
@@ -57,7 +82,8 @@
       "invalid_access_code": "❌ Érvénytelen hozzáférési kód (9 alfanumerikus karakter)."
     },
     "abort": {
-      "already_configured": "⚠️ Ez az eszköz már konfigurálva van."
+      "already_configured": "⚠️ Ez az eszköz már konfigurálva van.",
+      "reauth_successful": "Az újrahitelesítés sikeres volt"
     }
   },
   "options": {
@@ -73,6 +99,9 @@
               "access_code": "🔑 Hozzáférési kód (hagyja üresen a passzív módhoz: óránként 1 elemzés)",
               "chlorine_model": "🧪 Vízkezelés",
               "cya": "💧 Stabilizátor szint / CyA (mg/l)"
+            },
+            "data_description": {
+              "access_code": "Az USB port fedele alatti matricán vagy a szondák védősapkáján található. Igény szerinti elemzésekhez szükséges; hagyja üresen csak passzív figyeléshez."
             }
           },
           "synchronization": {
@@ -82,6 +111,9 @@
               "reference_time": "🕒 Referenciaidő (ütemezés)",
               "passive_measures": "📡 Blue Connect belső elemzései (passzív)",
               "ignore_echoes": "🚫 Elemzési visszhangok figyelmen kívül hagyása (passzív)"
+            },
+            "data_description": {
+              "reference_time": "Viszonyítási idő az ütemezett elemzések rendszeres időközökre igazításához (pl. 08:00, 10:00, 12:00... 2 órás intervallum esetén)."
             }
           },
           "probes_calibration": {
@@ -94,6 +126,10 @@
               "orp_calib": "📏 Mért érték ORP (pl. 650)",
               "orp_ref": "🎯 Célértékű oldat ORP (pl. 650)",
               "temp_offset": "🌡️ Hőmérséklet-eltolás (°C) (+/-)"
+            },
+            "data_description": {
+              "ph_calib_7": "A szonda által ténylegesen mért nyers pH-érték, amíg ebben a kalibráló oldatban volt (nem az oldat névleges értéke).",
+              "ph_calib_4": "A szonda által ténylegesen mért nyers pH-érték, amíg ebben a kalibráló oldatban volt (nem az oldat névleges értéke)."
             }
           },
           "alert_thresholds": {
@@ -278,6 +314,20 @@
       "reference_time": {
         "name": "Referenciaidő"
       }
+    }
+  },
+  "issues": {
+    "device_unreachable": {
+      "title": "A Blue Connect nem érhető el",
+      "description": "A Blue Connect szonda ({name}) {days} napja nem válaszol. Ellenőrizze a tápellátást, a hatótávolságot, és hogy egy Bluetooth adapter vagy ESPHome proxy lefedi-e a medence területét."
+    }
+  },
+  "exceptions": {
+    "out_of_range_no_history": {
+      "message": "A Blue Connect {mac} Bluetooth hatótávolságon kívül van, és nincs elérhető korábbi adat."
+    },
+    "unreachable_no_history": {
+      "message": "A Blue Connect nem érhető el, és nincs elérhető korábbi adat: {error}"
     }
   }
 }

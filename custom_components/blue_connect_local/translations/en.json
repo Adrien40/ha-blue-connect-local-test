@@ -25,6 +25,9 @@
               "reference_time": "🕒 Reference Time (Scheduling)",
               "passive_measures": "📡 Blue Connect Internal Analysis (Passive)",
               "ignore_echoes": "🚫 Ignore Analysis Echoes (Passive)"
+            },
+            "data_description": {
+              "reference_time": "Anchor time used to align scheduled analyses on regular slots (e.g. 08:00, 10:00, 12:00... for a 2-hour interval)."
             }
           },
           "probes_calibration": {
@@ -37,8 +40,30 @@
               "orp_calib": "📏 ORP (Redox) Measured Value (e.g., 650)",
               "orp_ref": "🎯 ORP (Redox) Target Solution (e.g., 650)",
               "temp_offset": "🌡️ Temperature Offset (°C) (+/-)"
+            },
+            "data_description": {
+              "ph_calib_7": "The raw pH value your probe actually measured while dipped in this calibration solution (not the solution's nominal value).",
+              "ph_calib_4": "The raw pH value your probe actually measured while dipped in this calibration solution (not the solution's nominal value)."
             }
           }
+        },
+        "data_description": {
+          "access_code": "Found on a sticker under the USB port cap, or on the probes' protection cap. Required for on-demand analyses; leave empty for passive-only listening."
+        }
+      },
+      "reauth_confirm": {
+        "title": "Re-authenticate Blue Connect",
+        "description": "The access code for {name} was rejected. Enter the new 9-character access code.",
+        "data": {
+          "access_code": "Access Code"
+        }
+      },
+      "reconfigure": {
+        "title": "Update Blue Connect device",
+        "description": "Point this entry at a different physical Blue Connect (e.g. after replacing the device), or correct the access code. Your options, automations, and entity history are kept.",
+        "data": {
+          "mac_address": "✍️ Bluetooth MAC address",
+          "access_code": "🔑 Access Code"
         }
       }
     },
@@ -57,7 +82,8 @@
       "invalid_access_code": "❌ Invalid Access Code (9 alphanumeric characters)."
     },
     "abort": {
-      "already_configured": "⚠️ This device is already configured."
+      "already_configured": "⚠️ This device is already configured.",
+      "reauth_successful": "Re-authentication was successful"
     }
   },
   "options": {
@@ -73,6 +99,9 @@
               "access_code": "🔑 Access Code (Leave empty for Passive Mode: 1 Analysis per hour)",
               "chlorine_model": "🧪 Water Treatment",
               "cya": "💧 Stabilizer Level / CyA (mg/l)"
+            },
+            "data_description": {
+              "access_code": "Found on a sticker under the USB port cap, or on the probes' protection cap. Required for on-demand analyses; leave empty for passive-only listening."
             }
           },
           "synchronization": {
@@ -82,6 +111,9 @@
               "reference_time": "🕒 Reference Time (Scheduling)",
               "passive_measures": "📡 Blue Connect Internal Analysis (Passive)",
               "ignore_echoes": "🚫 Ignore Analysis Echoes (Passive)"
+            },
+            "data_description": {
+              "reference_time": "Anchor time used to align scheduled analyses on regular slots (e.g. 08:00, 10:00, 12:00... for a 2-hour interval)."
             }
           },
           "probes_calibration": {
@@ -94,6 +126,10 @@
               "orp_calib": "📏 ORP (Redox) Measured Value (e.g., 650)",
               "orp_ref": "🎯 ORP (Redox) Target Solution (e.g., 650)",
               "temp_offset": "🌡️ Temperature Offset (°C) (+/-)"
+            },
+            "data_description": {
+              "ph_calib_7": "The raw pH value your probe actually measured while dipped in this calibration solution (not the solution's nominal value).",
+              "ph_calib_4": "The raw pH value your probe actually measured while dipped in this calibration solution (not the solution's nominal value)."
             }
           },
           "alert_thresholds": {
@@ -278,6 +314,20 @@
       "reference_time": {
         "name": "Reference Time"
       }
+    }
+  },
+  "issues": {
+    "device_unreachable": {
+      "title": "Blue Connect unreachable",
+      "description": "The Blue Connect probe ({name}) has not responded for {days} day(s). Check that it is powered, in range, and that a Bluetooth adapter or ESPHome proxy covers the pool area."
+    }
+  },
+  "exceptions": {
+    "out_of_range_no_history": {
+      "message": "Blue Connect {mac} is out of Bluetooth range and no previous data is available."
+    },
+    "unreachable_no_history": {
+      "message": "Blue Connect is unreachable and no previous data is available: {error}"
     }
   }
 }

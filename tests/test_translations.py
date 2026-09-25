@@ -1,4 +1,4 @@
-"""Cohérence des traductions : pas de clé en double, ni manquante, ni sans texte."""
+"""Translation consistency: no duplicate, missing, or empty key."""
 
 from __future__ import annotations
 
@@ -56,7 +56,7 @@ def _codes_returned_by(filename: str, function: str) -> set[str]:
 
 
 def _error_keys_in_flows() -> set[str]:
-    """Clés d'erreur posées par le config flow (`errors[...] = "code"`)."""
+    """Error keys set by the config flow (`errors[...] = "code"`)."""
     tree = ast.parse((COMPONENT / "config_flow.py").read_text(encoding="utf-8"))
     return {
         node.value.value
@@ -104,8 +104,8 @@ def test_every_validation_error_is_translated_in_both_flows(path):
     )
     for flow in ("config", "options"):
         missing = codes - set(data[flow]["error"])
-        # `mac_conflict`, `no_mac_provided`, `invalid_mac` n'existent que dans le
-        # flux de configuration initial.
+        # `mac_conflict`, `no_mac_provided`, `invalid_mac` only exist in the
+        # initial config flow.
         if flow == "options":
             missing -= {"mac_conflict", "no_mac_provided", "invalid_mac"}
         assert not missing, f"{path.name}: {flow}.error lacks {sorted(missing)}"

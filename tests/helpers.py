@@ -1,4 +1,4 @@
-"""Outils partagés : construction de trames et faux client BLE Blue Connect."""
+"""Shared test utilities: frame building and fake Blue Connect BLE client."""
 
 from __future__ import annotations
 
@@ -6,9 +6,9 @@ from collections.abc import Callable
 from typing import Any
 
 MAC = "AA:BB:CC:DD:EE:FF"
-ACCESS_CODE = "AB12CD34E"  # 9 caractères alphanumériques
+ACCESS_CODE = "AB12CD34E"  # 9 alphanumeric characters
 
-# UUID des caractéristiques lues après la mesure (valeurs de coordinator.py).
+# UUIDs of the characteristics read after the measurement (values from coordinator.py).
 UUID_RAW_SENSORS = "70ea0005-7a29-4fdf-93d2-838665e72677"
 UUID_ACCELEROMETER = "70ea000a-7a29-4fdf-93d2-838665e72677"
 UUID_SERIAL_NUMBER = "70ea0020-7a29-4fdf-93d2-838665e72677"
@@ -27,15 +27,15 @@ def build_frame(
     echo: bool = False,
     prefixed: bool = False,
 ) -> bytes:
-    """Trame de 18 octets (19 avec `prefixed`, un octet d'en-tête en plus).
+    """18-byte frame (19 with `prefixed`, one extra header byte).
 
-    Champs décodés par protocol.parse_raw_frame, tous big-endian :
-    température ×100, pH ×10, ORP, conductivité (0xFFFF = sonde absente),
-    salinité ×100, batterie %, batterie ADC. `echo` place le marqueur « B »
-    que le mode passif reconnaît comme un écho.
+    Fields decoded by protocol.parse_raw_frame, all big-endian:
+    temperature x100, pH x10, ORP, conductivity (0xFFFF = probe absent),
+    salinity x100, battery %, battery ADC. `echo` sets the "B" marker that
+    passive mode recognizes as an echo.
     """
     cond = 0xFFFF if conductivity is None else conductivity
-    body = bytearray(3)  # en-tête de 3 octets
+    body = bytearray(3)  # 3-byte header
     body += round(temp_c * 100).to_bytes(2, "big")
     body += round(ph * 10).to_bytes(2, "big")
     body += int(orp_mv).to_bytes(2, "big")
@@ -43,24 +43,24 @@ def build_frame(
     body += round(salinity * 100).to_bytes(2, "big")
     body += bytes([battery_pct])
     body += int(battery_adc).to_bytes(2, "big")
-    body += bytes([0xB0 if echo else 0x00, 0x00])  # 2 octets de fin
+    body += bytes([0xB0 if echo else 0x00, 0x00])  # 2 trailing bytes
     assert len(body) == 18
     return (b"\xaa" + bytes(body)) if prefixed else bytes(body)
 
 
 def clean_hex(frame: bytes) -> str:
-    """Trame telle que stockée (sans l'octet d'en-tête des trames de 19 octets)."""
+    """Frame as stored (without the header byte of 19-byte frames)."""
     return (frame[1:] if len(frame) == 19 else frame).hex().upper()
 
 
 class FakeBlueClient:
-    """Remplace BleakClient : authentification, déclenchement, notification, lectures.
+    """Replaces BleakClient: authentication, trigger, notification, reads.
 
-    - `frames` : trames livrées par notification à chaque écriture du déclencheur ;
-    - `auth_ok` : octet de statut d'authentification lu (True → 0x01, False → 0x00,
-      None → la lecture échoue) ;
-    - `write_errors` : exceptions levées successivement par write_gatt_char ;
-    - `reads` : valeurs des lectures GATT (UUID → octets) ; absentes → erreur.
+    - `frames`: frames delivered by notification on each trigger write;
+    - `auth_ok`: authentication status byte read (True -> 0x01, False -> 0x00,
+      None -> the read fails);
+    - `write_errors`: exceptions raised successively by write_gatt_char;
+    - `reads`: GATT read values (UUID -> bytes); missing -> error.
     """
 
     def __init__(
@@ -69,6 +69,7 @@ class FakeBlueClient:
         auth_ok: bool | None = True,
         write_errors: list[BaseException | None] | None = None,
         reads: dict[str, bytes] | None = None,
+        frames_per_trigger: int = 1,
     ) -> None:
         self.frames = list(frames or [])
         self.auth_ok = auth_ok
@@ -92,6 +93,10 @@ class FakeBlueClient:
         self.notify_stopped = False
         self.disconnected = False
         self._handler: Callable[[Any, bytearray], None] | None = None
+        # Number of frames delivered at once by the same trigger write (0x02):
+        # >1 simulates a burst of notifications, to test queue-full behavior
+        # (see test_notification_queue_full_is_logged).
+        self.frames_per_trigger = frames_per_trigger
 
     async def start_notify(self, uuid: str, handler: Callable) -> None:
         self.notify_started = True
@@ -106,9 +111,12 @@ class FakeBlueClient:
             error = self.write_errors.pop(0)
             if error is not None:
                 raise error
-        # Écriture du déclencheur (0x02) : la sonde répond par une notification.
-        if bytes(data) == b"\x02" and self._handler is not None and self.frames:
-            self._handler(None, bytearray(self.frames.pop(0)))
+        # Trigger write (0x02): the probe answers with a notification.
+        if bytes(data) == b"\x02" and self._handler is not None:
+            for _ in range(self.frames_per_trigger):
+                if not self.frames:
+                    break
+                self._handler(None, bytearray(self.frames.pop(0)))
 
     async def read_gatt_char(self, uuid: str) -> bytearray:
         if uuid.startswith("1fb20002"):  # statut d'authentification

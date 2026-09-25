@@ -25,6 +25,9 @@
               "reference_time": "🕒 参考时间（计划安排）",
               "passive_measures": "📡 Blue Connect 内部分析（被动）",
               "ignore_echoes": "🚫 忽略分析回声（被动）"
+            },
+            "data_description": {
+              "reference_time": "用于将计划分析对齐到固定时间段的基准时间（例如2小时间隔对应08:00、10:00、12:00……）。"
             }
           },
           "probes_calibration": {
@@ -37,8 +40,30 @@
               "orp_calib": "📏 测量值 ORP（例如 650）",
               "orp_ref": "🎯 目标溶液 ORP（例如 650）",
               "temp_offset": "🌡️ 温度偏移（°C）(+/-)"
+            },
+            "data_description": {
+              "ph_calib_7": "探头浸入此校准溶液时实际测得的原始pH值（不是溶液的标称值）。",
+              "ph_calib_4": "探头浸入此校准溶液时实际测得的原始pH值（不是溶液的标称值）。"
             }
           }
+        },
+        "data_description": {
+          "access_code": "位于USB端口盖下方的标签上，或探头保护盖上。按需分析时必填；留空则仅使用被动监听模式。"
+        }
+      },
+      "reauth_confirm": {
+        "title": "重新验证 Blue Connect",
+        "description": "{name} 的访问代码被拒绝。请输入新的9位访问代码。",
+        "data": {
+          "access_code": "访问代码"
+        }
+      },
+      "reconfigure": {
+        "title": "更新 Blue Connect 设备",
+        "description": "将此配置条目指向另一台实体 Blue Connect（例如更换设备后），或更正访问码。您的选项、自动化和实体历史记录将被保留。",
+        "data": {
+          "mac_address": "✍️ 蓝牙 MAC 地址",
+          "access_code": "🔑 访问码"
         }
       }
     },
@@ -57,7 +82,8 @@
       "invalid_access_code": "❌ 访问代码无效（9 位字母数字字符）。"
     },
     "abort": {
-      "already_configured": "⚠️ 此设备已配置。"
+      "already_configured": "⚠️ 此设备已配置。",
+      "reauth_successful": "重新验证成功"
     }
   },
   "options": {
@@ -73,6 +99,9 @@
               "access_code": "🔑 访问代码（留空以使用被动模式：每小时 1 次分析）",
               "chlorine_model": "🧪 水处理方式",
               "cya": "💧 稳定剂水平 / CyA（毫克/升）"
+            },
+            "data_description": {
+              "access_code": "位于USB端口盖下方的标签上，或探头保护盖上。按需分析时必填；留空则仅使用被动监听模式。"
             }
           },
           "synchronization": {
@@ -82,6 +111,9 @@
               "reference_time": "🕒 参考时间（计划安排）",
               "passive_measures": "📡 Blue Connect 内部分析（被动）",
               "ignore_echoes": "🚫 忽略分析回声（被动）"
+            },
+            "data_description": {
+              "reference_time": "用于将计划分析对齐到固定时间段的基准时间（例如2小时间隔对应08:00、10:00、12:00……）。"
             }
           },
           "probes_calibration": {
@@ -94,6 +126,10 @@
               "orp_calib": "📏 测量值 ORP（例如 650）",
               "orp_ref": "🎯 目标溶液 ORP（例如 650）",
               "temp_offset": "🌡️ 温度偏移（°C）(+/-)"
+            },
+            "data_description": {
+              "ph_calib_7": "探头浸入此校准溶液时实际测得的原始pH值（不是溶液的标称值）。",
+              "ph_calib_4": "探头浸入此校准溶液时实际测得的原始pH值（不是溶液的标称值）。"
             }
           },
           "alert_thresholds": {
@@ -278,6 +314,20 @@
       "reference_time": {
         "name": "参考时间"
       }
+    }
+  },
+  "issues": {
+    "device_unreachable": {
+      "title": "Blue Connect 无法连接",
+      "description": "Blue Connect探头（{name}）已有{days}天未响应。请检查电源、信号范围，以及是否有蓝牙适配器或ESPHome代理覆盖泳池区域。"
+    }
+  },
+  "exceptions": {
+    "out_of_range_no_history": {
+      "message": "Blue Connect {mac} 超出蓝牙范围，且没有可用的历史数据。"
+    },
+    "unreachable_no_history": {
+      "message": "Blue Connect 无法连接，且没有可用的历史数据：{error}"
     }
   }
 }

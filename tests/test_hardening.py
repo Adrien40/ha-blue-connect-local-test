@@ -1,4 +1,4 @@
-"""Robustesse : entrées invalides, valeurs impossibles, compatibilité de version HA."""
+"""Robustness: invalid inputs, impossible values, HA version compatibility."""
 
 from __future__ import annotations
 
@@ -36,7 +36,7 @@ VALID = {"ph_calib_4": 4.0, "ph_calib_7": 7.0, "ph_ref_4": 4.0, "ph_ref_7": 7.0}
 
 
 # ---------------------------------------------------------------------------
-# Langelier : jamais de NaN ni d'exception
+# Langelier: never NaN nor an exception
 # ---------------------------------------------------------------------------
 @pytest.mark.parametrize(
     ("temp", "ph", "tac", "th", "tds"),
@@ -76,7 +76,7 @@ def test_lsi_reference_value():
 
 
 # ---------------------------------------------------------------------------
-# Décodage des trames : robuste à n'importe quel contenu
+# Frame decoding: robust to any content
 # ---------------------------------------------------------------------------
 @given(st.binary(min_size=0, max_size=40))
 def test_parse_raw_frame_never_raises(data):
@@ -86,7 +86,7 @@ def test_parse_raw_frame_never_raises(data):
 
 
 # ---------------------------------------------------------------------------
-# Validation : conversions numériques protégées
+# Validation: protected numeric conversions
 # ---------------------------------------------------------------------------
 @pytest.mark.parametrize(
     ("key", "value"),
@@ -99,7 +99,7 @@ def test_parse_raw_frame_never_raises(data):
     ],
 )
 def test_non_numeric_values_return_an_error_instead_of_raising(key, value):
-    """Régression : ces valeurs levaient une ValueError non gérée."""
+    """Regression: these values used to raise an unhandled ValueError."""
     assert validate_calibration({**VALID, key: value}) == (key, "unknown")
 
 
@@ -137,7 +137,7 @@ async def test_impossible_ph_becomes_unknown(hass, setup_integration, ble, caplo
 
 
 # ---------------------------------------------------------------------------
-# Compatibilité : registre d'appareils (HA 2026.3 ↔ 2026.9)
+# Compatibility: device registry (HA 2026.3 <-> 2026.9)
 # ---------------------------------------------------------------------------
 class _NewRegistry:
     def __init__(self):
@@ -147,7 +147,7 @@ class _NewRegistry:
         self.calls.append((identifier, config_entry_id))
         return "new-api-device"
 
-    def async_get_device(self, **_):  # ne doit pas être appelé
+    def async_get_device(self, **_):  # must not be called
         raise AssertionError("deprecated API used although the new one exists")
 
 
@@ -168,7 +168,7 @@ def test_find_device_falls_back_on_older_home_assistant():
 
 
 # ---------------------------------------------------------------------------
-# Seuils égaux et créneaux proches (cas limites trouvés par test de mutation)
+# Equal thresholds and nearby slots (edge cases found by mutation testing)
 # ---------------------------------------------------------------------------
 @pytest.mark.parametrize(
     ("low", "high", "code"),
@@ -186,7 +186,7 @@ def test_equal_min_and_max_thresholds_are_rejected(low, high, code):
 async def test_slot_less_than_10_seconds_away_is_skipped(
     hass, setup_integration, freezer
 ):
-    """À 5 s du créneau de 11:00, la prochaine analyse est planifiée à 12:00."""
+    """5 s before the 11:00 slot, the next analysis is scheduled for 12:00."""
     from datetime import datetime
 
     import homeassistant.util.dt as dt_util

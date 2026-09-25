@@ -25,6 +25,9 @@
               "reference_time": "🕒 Referenzzeit (Zeitplanung)",
               "passive_measures": "📡 Interne Analysen des Blue Connect (passiv)",
               "ignore_echoes": "🚫 Analyse-Echos ignorieren (passiv)"
+            },
+            "data_description": {
+              "reference_time": "Ankerzeit zur Ausrichtung geplanter Analysen auf regelmäßige Intervalle (z. B. 08:00, 10:00, 12:00... bei einem 2-Stunden-Intervall)."
             }
           },
           "probes_calibration": {
@@ -37,8 +40,30 @@
               "orp_calib": "📏 Gemessener Wert ORP (z. B. 650)",
               "orp_ref": "🎯 Referenzlösung ORP (z. B. 650)",
               "temp_offset": "🌡️ Temperaturabweichung (°C) (+/-)"
+            },
+            "data_description": {
+              "ph_calib_7": "Der rohe pH-Wert, den Ihre Sonde tatsächlich gemessen hat, während sie in diese Kalibrierlösung eingetaucht war (nicht der Nennwert der Lösung).",
+              "ph_calib_4": "Der rohe pH-Wert, den Ihre Sonde tatsächlich gemessen hat, während sie in diese Kalibrierlösung eingetaucht war (nicht der Nennwert der Lösung)."
             }
           }
+        },
+        "data_description": {
+          "access_code": "Zu finden auf einem Aufkleber unter der USB-Anschlussabdeckung oder auf der Schutzkappe der Sonden. Erforderlich für Analysen auf Abruf; leer lassen für reinen Passivmodus."
+        }
+      },
+      "reauth_confirm": {
+        "title": "Blue Connect erneut authentifizieren",
+        "description": "Der Zugangscode für {name} wurde abgelehnt. Geben Sie den neuen 9-stelligen Zugangscode ein.",
+        "data": {
+          "access_code": "Zugangscode"
+        }
+      },
+      "reconfigure": {
+        "title": "Blue Connect-Gerät aktualisieren",
+        "description": "Verknüpfen Sie diesen Eintrag mit einem anderen physischen Blue Connect (z. B. nach einem Geräteaustausch), oder korrigieren Sie den Zugangscode. Ihre Optionen, Automatisierungen und der Entitätsverlauf bleiben erhalten.",
+        "data": {
+          "mac_address": "✍️ Bluetooth-MAC-Adresse",
+          "access_code": "🔑 Zugangscode"
         }
       }
     },
@@ -57,7 +82,8 @@
       "invalid_access_code": "❌ Ungültiger Zugangscode (9 alphanumerische Zeichen)."
     },
     "abort": {
-      "already_configured": "⚠️ Dieses Gerät ist bereits konfiguriert."
+      "already_configured": "⚠️ Dieses Gerät ist bereits konfiguriert.",
+      "reauth_successful": "Erneute Authentifizierung war erfolgreich"
     }
   },
   "options": {
@@ -73,6 +99,9 @@
               "access_code": "🔑 Zugangscode (leer lassen für Passivmodus: 1 Analyse pro Stunde)",
               "chlorine_model": "🧪 Wasseraufbereitung",
               "cya": "💧 Stabilisatorwert / CyA (mg/l)"
+            },
+            "data_description": {
+              "access_code": "Zu finden auf einem Aufkleber unter der USB-Anschlussabdeckung oder auf der Schutzkappe der Sonden. Erforderlich für Analysen auf Abruf; leer lassen für reinen Passivmodus."
             }
           },
           "synchronization": {
@@ -82,6 +111,9 @@
               "reference_time": "🕒 Referenzzeit (Zeitplanung)",
               "passive_measures": "📡 Interne Analysen des Blue Connect (passiv)",
               "ignore_echoes": "🚫 Analyse-Echos ignorieren (passiv)"
+            },
+            "data_description": {
+              "reference_time": "Ankerzeit zur Ausrichtung geplanter Analysen auf regelmäßige Intervalle (z. B. 08:00, 10:00, 12:00... bei einem 2-Stunden-Intervall)."
             }
           },
           "probes_calibration": {
@@ -94,6 +126,10 @@
               "orp_calib": "📏 Gemessener Wert ORP (z. B. 650)",
               "orp_ref": "🎯 Referenzlösung ORP (z. B. 650)",
               "temp_offset": "🌡️ Temperaturabweichung (°C) (+/-)"
+            },
+            "data_description": {
+              "ph_calib_7": "Der rohe pH-Wert, den Ihre Sonde tatsächlich gemessen hat, während sie in diese Kalibrierlösung eingetaucht war (nicht der Nennwert der Lösung).",
+              "ph_calib_4": "Der rohe pH-Wert, den Ihre Sonde tatsächlich gemessen hat, während sie in diese Kalibrierlösung eingetaucht war (nicht der Nennwert der Lösung)."
             }
           },
           "alert_thresholds": {
@@ -278,6 +314,20 @@
       "reference_time": {
         "name": "Referenzzeit"
       }
+    }
+  },
+  "issues": {
+    "device_unreachable": {
+      "title": "Blue Connect nicht erreichbar",
+      "description": "Die Blue Connect-Sonde ({name}) hat seit {days} Tag(en) nicht geantwortet. Prüfen Sie Stromversorgung, Reichweite und ob ein Bluetooth-Adapter oder ESPHome-Proxy den Poolbereich abdeckt."
+    }
+  },
+  "exceptions": {
+    "out_of_range_no_history": {
+      "message": "Blue Connect {mac} ist außerhalb der Bluetooth-Reichweite und es sind keine vorherigen Daten verfügbar."
+    },
+    "unreachable_no_history": {
+      "message": "Blue Connect ist nicht erreichbar und es sind keine vorherigen Daten verfügbar: {error}"
     }
   }
 }

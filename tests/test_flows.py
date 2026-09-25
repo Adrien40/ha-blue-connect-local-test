@@ -1,4 +1,4 @@
-"""Config flow et options flow (avec Home Assistant) ; validation dans test_config_flow.py."""
+"""Config flow and options flow (with Home Assistant); validation in test_config_flow.py."""
 
 from __future__ import annotations
 
@@ -6,10 +6,16 @@ from time import monotonic
 from unittest.mock import AsyncMock, patch
 
 import pytest
+import voluptuous as vol
 from bleak.backends.device import BLEDevice
 from bleak.backends.scanner import AdvertisementData
 from homeassistant.components.bluetooth import BluetoothServiceInfoBleak
-from homeassistant.config_entries import SOURCE_BLUETOOTH, SOURCE_USER
+from homeassistant.config_entries import (
+    SOURCE_BLUETOOTH,
+    SOURCE_REAUTH,
+    SOURCE_RECONFIGURE,
+    SOURCE_USER,
+)
 from homeassistant.data_entry_flow import FlowResultType
 
 from custom_components.blue_connect_local.const import (
@@ -269,7 +275,7 @@ def _options_input(access_code=ACCESS_CODE, **over) -> dict:
     }
     thresholds.update(over.pop("alert_thresholds", {}))
     sections = _sections(**over)
-    # Dans le formulaire d'options, le code d'accès est dans la section « général ».
+    # In the options form, the access code lives in the "general" section.
     sections["general"] = {CONF_ACCESS_CODE: access_code, **sections["general"]}
     return {**sections, "alert_thresholds": thresholds}
 
@@ -370,3 +376,130 @@ async def test_options_validation_errors(hass, entry, coordinator, over, field, 
     )
     assert result["type"] is FlowResultType.FORM
     assert result["errors"] == {field: code}
+
+
+# ---------------------------------------------------------------------------
+# Reauthentication
+# ---------------------------------------------------------------------------
+async def test_invalid_access_code_starts_reauth(hass, entry, coordinator):
+    entry.async_start_reauth(hass)
+    await hass.async_block_till_done()
+
+    flows = hass.config_entries.flow.async_progress_by_handler(DOMAIN)
+    reauth_flows = [f for f in flows if f["context"]["source"] == SOURCE_REAUTH]
+    assert len(reauth_flows) == 1
+    assert reauth_flows[0]["context"]["entry_id"] == entry.entry_id
+
+
+async def test_reauth_confirm_updates_access_code(hass, entry, coordinator):
+    entry.async_start_reauth(hass)
+    await hass.async_block_till_done()
+
+    flows = hass.config_entries.flow.async_progress_by_handler(DOMAIN)
+    reauth_flow_id = flows[0]["flow_id"]
+
+    result = await hass.config_entries.flow.async_configure(
+        reauth_flow_id, {CONF_ACCESS_CODE: "NEWCODE99"}
+    )
+    await hass.async_block_till_done()
+
+    assert result["type"] is FlowResultType.ABORT
+    assert result["reason"] == "reauth_successful"
+    assert entry.data[CONF_ACCESS_CODE] == "NEWCODE99"
+
+
+# ---------------------------------------------------------------------------
+# Flux de reconfiguration (changement d'appareil physique / code d'accès)
+# ---------------------------------------------------------------------------
+NEW_MAC = "11:22:33:44:55:66"
+
+
+async def _start_reconfigure(hass, entry):
+    return await hass.config_entries.flow.async_init(
+        DOMAIN,
+        context={"source": SOURCE_RECONFIGURE, "entry_id": entry.entry_id},
+    )
+
+
+async def test_reconfigure_form_prefills_current_values(hass, entry, coordinator):
+    result = await _start_reconfigure(hass, entry)
+    assert result["type"] is FlowResultType.FORM
+    assert result["step_id"] == "reconfigure"
+    schema_defaults = {
+        field.schema: field.default()
+        for field in result["data_schema"].schema
+        if field.default is not vol.UNDEFINED
+    }
+    assert schema_defaults[CONF_MAC_ADDRESS] == MAC
+    assert schema_defaults[CONF_ACCESS_CODE] == ACCESS_CODE
+
+
+async def test_reconfigure_updates_mac_and_access_code(hass, entry, coordinator):
+    result = await _start_reconfigure(hass, entry)
+
+    result = await hass.config_entries.flow.async_configure(
+        result["flow_id"],
+        {CONF_MAC_ADDRESS: NEW_MAC, CONF_ACCESS_CODE: "NEWCODE99"},
+    )
+    await hass.async_block_till_done()
+
+    assert result["type"] is FlowResultType.ABORT
+    assert result["reason"] == "reconfigure_successful"
+    assert entry.data[CONF_MAC_ADDRESS] == NEW_MAC
+    assert entry.data[CONF_ACCESS_CODE] == "NEWCODE99"
+    assert entry.unique_id == NEW_MAC
+
+
+async def test_reconfigure_rejects_invalid_mac(hass, entry, coordinator):
+    result = await _start_reconfigure(hass, entry)
+    result = await hass.config_entries.flow.async_configure(
+        result["flow_id"],
+        {CONF_MAC_ADDRESS: "not-a-mac", CONF_ACCESS_CODE: ACCESS_CODE},
+    )
+    assert result["errors"] == {CONF_MAC_ADDRESS: "invalid_mac"}
+    # The original entry must be untouched.
+    assert entry.data[CONF_MAC_ADDRESS] == MAC
+
+
+async def test_reconfigure_rejects_invalid_access_code(hass, entry, coordinator):
+    result = await _start_reconfigure(hass, entry)
+    result = await hass.config_entries.flow.async_configure(
+        result["flow_id"],
+        {CONF_MAC_ADDRESS: MAC, CONF_ACCESS_CODE: "short"},
+    )
+    assert result["errors"] == {CONF_ACCESS_CODE: "invalid_access_code"}
+
+
+async def test_reconfigure_can_keep_the_same_mac(hass, entry, coordinator):
+    """Just correcting the access code, without changing the device."""
+    result = await _start_reconfigure(hass, entry)
+
+    result = await hass.config_entries.flow.async_configure(
+        result["flow_id"],
+        {CONF_MAC_ADDRESS: MAC, CONF_ACCESS_CODE: "NEWCODE99"},
+    )
+    await hass.async_block_till_done()
+
+    assert result["type"] is FlowResultType.ABORT
+    assert result["reason"] == "reconfigure_successful"
+    assert entry.data[CONF_ACCESS_CODE] == "NEWCODE99"
+
+
+async def test_reconfigure_aborts_if_mac_used_by_another_entry(
+    hass, entry, coordinator
+):
+    other_mac = "AA:AA:AA:AA:AA:AA"
+    other_entry = make_entry()
+    other_entry.add_to_hass(hass)
+    hass.config_entries.async_update_entry(other_entry, unique_id=other_mac)
+
+    result = await _start_reconfigure(hass, entry)
+    result = await hass.config_entries.flow.async_configure(
+        result["flow_id"],
+        {CONF_MAC_ADDRESS: other_mac, CONF_ACCESS_CODE: ACCESS_CODE},
+    )
+
+    assert result["type"] is FlowResultType.ABORT
+    assert result["reason"] == "already_configured"
+    # The original entry must be untouched.
+    assert entry.data[CONF_MAC_ADDRESS] == MAC

@@ -25,6 +25,9 @@
               "reference_time": "🕒 Referencetid (planlægning)",
               "passive_measures": "📡 Blue Connect interne analyser (passiv)",
               "ignore_echoes": "🚫 Ignorer analyseekkoer (passiv)"
+            },
+            "data_description": {
+              "reference_time": "Referencetidspunkt til at justere planlagte analyser til regelmæssige intervaller (f.eks. 08:00, 10:00, 12:00... for et 2-timers interval)."
             }
           },
           "probes_calibration": {
@@ -37,8 +40,30 @@
               "orp_calib": "📏 Målt værdi ORP (f.eks. 650)",
               "orp_ref": "🎯 Målopløsning ORP (f.eks. 650)",
               "temp_offset": "🌡️ Temperaturforskydning (°C) (+/-)"
+            },
+            "data_description": {
+              "ph_calib_7": "Den rå pH-værdi, som sonden faktisk målte, mens den var nedsænket i denne kalibreringsopløsning (ikke opløsningens nominelle værdi).",
+              "ph_calib_4": "Den rå pH-værdi, som sonden faktisk målte, mens den var nedsænket i denne kalibreringsopløsning (ikke opløsningens nominelle værdi)."
             }
           }
+        },
+        "data_description": {
+          "access_code": "Findes på en mærkat under USB-portens dæksel eller på sondernes beskyttelseshætte. Kræves til analyser på forespørgsel; lad stå tomt for kun passiv lytning."
+        }
+      },
+      "reauth_confirm": {
+        "title": "Genautentificer Blue Connect",
+        "description": "Adgangskoden til {name} blev afvist. Indtast den nye 9-tegns adgangskode.",
+        "data": {
+          "access_code": "Adgangskode"
+        }
+      },
+      "reconfigure": {
+        "title": "Opdater Blue Connect-enhed",
+        "description": "Peg denne post på en anden fysisk Blue Connect (f.eks. efter udskiftning), eller ret adgangskoden. Dine indstillinger, automatiseringer og enhedshistorik bevares.",
+        "data": {
+          "mac_address": "✍️ Bluetooth MAC-adresse",
+          "access_code": "🔑 Adgangskode"
         }
       }
     },
@@ -57,7 +82,8 @@
       "invalid_access_code": "❌ Ugyldig adgangskode (9 alfanumeriske tegn)."
     },
     "abort": {
-      "already_configured": "⚠️ Denne enhed er allerede konfigureret."
+      "already_configured": "⚠️ Denne enhed er allerede konfigureret.",
+      "reauth_successful": "Genautentificering lykkedes"
     }
   },
   "options": {
@@ -73,6 +99,9 @@
               "access_code": "🔑 Adgangskode (lad stå tom for passiv tilstand: 1 analyse pr. time)",
               "chlorine_model": "🧪 Vandbehandling",
               "cya": "💧 Stabilisatorniveau / CyA (mg/l)"
+            },
+            "data_description": {
+              "access_code": "Findes på en mærkat under USB-portens dæksel eller på sondernes beskyttelseshætte. Kræves til analyser på forespørgsel; lad stå tomt for kun passiv lytning."
             }
           },
           "synchronization": {
@@ -82,6 +111,9 @@
               "reference_time": "🕒 Referencetid (planlægning)",
               "passive_measures": "📡 Blue Connect interne analyser (passiv)",
               "ignore_echoes": "🚫 Ignorer analyseekkoer (passiv)"
+            },
+            "data_description": {
+              "reference_time": "Referencetidspunkt til at justere planlagte analyser til regelmæssige intervaller (f.eks. 08:00, 10:00, 12:00... for et 2-timers interval)."
             }
           },
           "probes_calibration": {
@@ -94,6 +126,10 @@
               "orp_calib": "📏 Målt værdi ORP (f.eks. 650)",
               "orp_ref": "🎯 Målopløsning ORP (f.eks. 650)",
               "temp_offset": "🌡️ Temperaturforskydning (°C) (+/-)"
+            },
+            "data_description": {
+              "ph_calib_7": "Den rå pH-værdi, som sonden faktisk målte, mens den var nedsænket i denne kalibreringsopløsning (ikke opløsningens nominelle værdi).",
+              "ph_calib_4": "Den rå pH-værdi, som sonden faktisk målte, mens den var nedsænket i denne kalibreringsopløsning (ikke opløsningens nominelle værdi)."
             }
           },
           "alert_thresholds": {
@@ -278,6 +314,20 @@
       "reference_time": {
         "name": "Referencetid"
       }
+    }
+  },
+  "issues": {
+    "device_unreachable": {
+      "title": "Blue Connect utilgængelig",
+      "description": "Blue Connect-sonden ({name}) har ikke svaret i {days} dag(e). Kontroller strøm, rækkevidde, og at en Bluetooth-adapter eller ESPHome-proxy dækker poolområdet."
+    }
+  },
+  "exceptions": {
+    "out_of_range_no_history": {
+      "message": "Blue Connect {mac} er uden for Bluetooth-rækkevidde, og der er ingen tidligere data tilgængelige."
+    },
+    "unreachable_no_history": {
+      "message": "Blue Connect er utilgængelig, og der er ingen tidligere data tilgængelige: {error}"
     }
   }
 }

@@ -1,10 +1,11 @@
-"""Entités : capteurs (dont le Redox brut), alertes, nombres, interrupteurs, bouton."""
+"""Entities: sensors (including raw Redox), alerts, numbers, switches, button."""
 
 from __future__ import annotations
 
 from datetime import time
 from unittest.mock import AsyncMock
 
+import homeassistant.util.dt as dt_util
 import pytest
 from homeassistant.const import (
     STATE_OFF,
@@ -16,6 +17,7 @@ from homeassistant.const import (
 from homeassistant.exceptions import ServiceValidationError
 from homeassistant.helpers import entity_registry as er
 
+from custom_components.blue_connect_local.binary_sensor import BlueConnectAlertSensor
 from custom_components.blue_connect_local.const import (
     BT_STATUS_OUT_OF_RANGE,
     BT_STATUS_PAUSED,
@@ -30,6 +32,11 @@ from custom_components.blue_connect_local.const import (
     CONF_REFERENCE_TIME,
     CONF_SCAN_INTERVAL,
     CONF_TEMP_MAX,
+    DEFAULT_PH_MAX,
+)
+from custom_components.blue_connect_local.switch import (
+    BlueConnectActiveMeasuresSwitch,
+    BlueConnectPassiveMeasuresSwitch,
 )
 
 from .conftest import entity_id, make_entry
@@ -74,7 +81,7 @@ async def test_measurement_sensors(hass, coordinator):
 async def test_raw_orp_is_not_affected_by_calibration_offset(
     hass, setup_integration, ble
 ):
-    """Le Redox brut sert à *établir* le décalage : il reste la valeur de la sonde."""
+    """Raw Redox is used to *establish* the offset: it stays the probe's value."""
     ble.client = FakeBlueClient([build_frame(orp_mv=700)])
     coord = await setup_integration(
         make_entry(**{CONF_ORP_CALIB: 640, CONF_ORP_REF: 650})
@@ -111,6 +118,44 @@ async def test_sensor_unknown_before_first_measurement(hass, coordinator):
 
 async def test_rssi_sensor_reads_advertisements(hass, coordinator, ble):
     assert hass.states.get(entity_id(hass, "sensor", "rssi")).state == str(ble.rssi)
+
+
+async def test_next_analysis_unknown_when_no_slot_scheduled(hass, coordinator):
+    coordinator.next_slot = None
+    coordinator.async_set_updated_data(dict(coordinator.data))
+    await hass.async_block_till_done()
+    # `available` depends on native_value here, so no scheduled slot means
+    # "unavailable", not "unknown".
+    assert hass.states.get(entity_id(hass, "sensor", "next_analysis")).state == (
+        STATE_UNAVAILABLE
+    )
+
+
+async def test_next_analysis_converts_naive_slot_to_utc(hass, coordinator):
+    """next_slot is normally tz-aware; a naive value must still be handled."""
+    naive = dt_util.utcnow().replace(tzinfo=None)
+    coordinator.next_slot = naive
+    coordinator.async_set_updated_data(dict(coordinator.data))
+    await hass.async_block_till_done()
+    state = hass.states.get(entity_id(hass, "sensor", "next_analysis"))
+    assert dt_util.parse_datetime(state.state) == dt_util.as_utc(naive).replace(
+        microsecond=0
+    )
+
+
+async def test_next_analysis_converts_naive_slot_to_utc_in_passive_mode(
+    hass, setup_integration
+):
+    """Same conversion, but for a device with no access code (passive mode)."""
+    coordinator = await setup_integration(make_entry(access_code=None))
+    naive = dt_util.utcnow().replace(tzinfo=None)
+    coordinator.next_slot = naive
+    coordinator.async_set_updated_data(dict(coordinator.data))
+    await hass.async_block_till_done()
+    state = hass.states.get(entity_id(hass, "sensor", "next_analysis"))
+    assert dt_util.parse_datetime(state.state) == dt_util.as_utc(naive).replace(
+        microsecond=0
+    )
 
 
 # ---------------------------------------------------------------------------
@@ -162,6 +207,49 @@ async def test_alert_threshold_itself_is_not_an_alert(hass, coordinator):
         hass.states.get(entity_id(hass, "binary_sensor", "orp_status")).state
         == STATE_OFF
     )
+
+
+async def test_alert_is_on_none_with_no_coordinator_data(hass, coordinator):
+    coordinator.async_set_updated_data({})
+    await hass.async_block_till_done()
+    assert (
+        hass.states.get(entity_id(hass, "binary_sensor", "ph_status")).state
+        == STATE_UNKNOWN
+    )
+
+
+async def test_alert_is_on_returns_none_for_unknown_data_key(hass, coordinator):
+    """Defensive fallback: only ph/orp/temperature are meaningful data_keys."""
+    sensor = BlueConnectAlertSensor(
+        coordinator,
+        "fake_entry_id",
+        coordinator.mac,
+        "Blue Connect",
+        "scan_interval_status",
+        "scan_interval",
+    )
+    assert sensor.is_on is None
+
+
+async def test_alert_threshold_falls_back_to_default_when_entry_is_gone(
+    hass, coordinator
+):
+    """_threshold must not crash if the config entry vanished."""
+    sensor = BlueConnectAlertSensor(
+        coordinator, "fake_entry_id", coordinator.mac, "Blue Connect", "ph_status", "ph"
+    )
+    sensor.hass = hass
+    original_async_get_entry = hass.config_entries.async_get_entry
+    hass.config_entries.async_get_entry = lambda entry_id: (
+        None if entry_id == "fake_entry_id" else original_async_get_entry(entry_id)
+    )
+    try:
+        # coordinator.data has no "ph_max" key, so _threshold must fall
+        # through to the (now unreachable) entry lookup, and finally to
+        # _DEFAULT_THRESHOLDS.
+        assert sensor._threshold(CONF_PH_MAX) == DEFAULT_PH_MAX
+    finally:
+        hass.config_entries.async_get_entry = original_async_get_entry
 
 
 # ---------------------------------------------------------------------------
@@ -216,7 +304,7 @@ async def test_cya_unavailable_with_bromine(hass, coordinator):
 
 
 async def test_cya_survives_unrelated_setting_changes(hass, coordinator):
-    """CyA et type de traitement sont conservés : un autre réglage ne doit pas les écraser."""
+    """CyA and treatment type are kept: another setting must not overwrite them."""
     cya = entity_id(hass, "number", "cya")
     await _call(hass, "number", "set_value", cya, value=80)
     coordinator.update_local_state({CONF_CHLORINE_MODEL: "bromine"})
@@ -227,7 +315,7 @@ async def test_cya_survives_unrelated_setting_changes(hass, coordinator):
 
 
 # ---------------------------------------------------------------------------
-# Interrupteurs, heure de référence, bouton
+# Switches, reference time, button
 # ---------------------------------------------------------------------------
 async def test_active_measures_switch(hass, coordinator):
     switch = entity_id(hass, "switch", "active_measures")
@@ -250,10 +338,42 @@ async def test_active_measures_resume_without_bluetooth(hass, coordinator, ble):
 
 async def test_passive_measures_switch(hass, coordinator):
     switch = entity_id(hass, "switch", "passive_measures")
-    assert hass.states.get(switch).state == STATE_ON  # activé par défaut
+    assert hass.states.get(switch).state == STATE_ON  # enabled by default
     await _call(hass, "switch", "turn_off", switch)
     assert coordinator.data[CONF_PASSIVE_MEASURES] is False
     assert hass.states.get(switch).state == STATE_OFF
+    await _call(hass, "switch", "turn_on", switch)
+    assert coordinator.data[CONF_PASSIVE_MEASURES] is True
+    assert hass.states.get(switch).state == STATE_ON
+
+
+async def test_active_measures_switch_defaults_on_with_no_coordinator_data(
+    hass, coordinator
+):
+    """is_on defaults to True when coordinator.data is empty.
+
+    Checked directly on the property: going through the HASS state would
+    also hit `available` (which separately depends on `access_code`, itself
+    read from `coordinator.data`), masking the behavior under test.
+    """
+    coordinator.async_set_updated_data({})
+    switch = BlueConnectActiveMeasuresSwitch(
+        coordinator, coordinator.mac, "Blue Connect", "fake_entry_id"
+    )
+    assert switch.is_on is True
+
+
+async def test_passive_measures_defaults_true_when_entry_is_gone(hass, coordinator):
+    """is_on must not crash if the config entry vanished; defaults to True."""
+    data_without_key = {
+        k: v for k, v in coordinator.data.items() if k != CONF_PASSIVE_MEASURES
+    }
+    coordinator.async_set_updated_data(data_without_key)
+    switch = BlueConnectPassiveMeasuresSwitch(
+        coordinator, coordinator.mac, "Blue Connect", "fake_entry_id"
+    )
+    switch.hass = hass
+    assert switch.is_on is True
 
 
 async def test_active_controls_unavailable_without_access_code(hass, setup_integration):
@@ -294,3 +414,55 @@ async def test_button_swallows_refresh_errors(hass, coordinator):
     await _call(hass, "button", "press", entity_id(hass, "button", "force_analysis"))
     await hass.async_block_till_done(wait_background_tasks=True)
     assert coordinator.data["action_running"] is False
+
+
+async def test_button_swallows_unexpected_error_types(hass, coordinator):
+    # KeyError is neither HomeAssistantError nor RuntimeError: this is exactly
+    # what the narrower except clause used to miss.
+    coordinator.async_request_refresh = AsyncMock(side_effect=KeyError("unexpected"))
+    await _call(hass, "button", "press", entity_id(hass, "button", "force_analysis"))
+    await hass.async_block_till_done(wait_background_tasks=True)
+    assert coordinator.data["action_running"] is False
+
+
+async def test_button_ignored_while_shutting_down(hass, coordinator):
+    """A press during shutdown must be a no-op, not raise or schedule anything."""
+    coordinator.async_request_refresh = AsyncMock()
+    coordinator._is_shutdown = True
+    try:
+        assert coordinator.is_shutdown is True  # public property reads it back
+        await _call(
+            hass, "button", "press", entity_id(hass, "button", "force_analysis")
+        )
+        await hass.async_block_till_done(wait_background_tasks=True)
+        coordinator.async_request_refresh.assert_not_awaited()
+    finally:
+        # Restore normal state so the `coordinator`/`setup_integration` fixture
+        # can unload the entry cleanly at the end of the test.
+        coordinator._is_shutdown = False
+
+
+async def test_button_logs_timeout_without_leaving_action_running(hass, coordinator):
+    """A refresh that exceeds TIMEOUT_FORCE_REFRESH is logged, not raised."""
+    coordinator.async_request_refresh = AsyncMock(side_effect=TimeoutError())
+    await _call(hass, "button", "press", entity_id(hass, "button", "force_analysis"))
+    await hass.async_block_till_done(wait_background_tasks=True)
+    assert coordinator.data["action_running"] is False
+
+
+async def test_button_does_not_schedule_task_when_entry_is_gone(hass, coordinator):
+    """If the config entry disappeared mid-press, no background task is scheduled."""
+    coordinator.async_request_refresh = AsyncMock()
+    original_async_get_entry = hass.config_entries.async_get_entry
+    hass.config_entries.async_get_entry = lambda entry_id: None
+    try:
+        await _call(
+            hass, "button", "press", entity_id(hass, "button", "force_analysis")
+        )
+        await hass.async_block_till_done(wait_background_tasks=True)
+        coordinator.async_request_refresh.assert_not_awaited()
+    finally:
+        # Restore before returning: Home Assistant's own entry-unload
+        # machinery (run by the `coordinator` fixture's teardown, right
+        # after this test function returns) relies on this same method.
+        hass.config_entries.async_get_entry = original_async_get_entry

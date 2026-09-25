@@ -42,7 +42,6 @@ from .const import (
     BT_STATUS_WAITING,
     BT_STATUS_WRITE_FAILED,
     CONF_MAC_ADDRESS,
-    DOMAIN,
     blue_connect_device_info,
     get_blue_connect_model,
     model_has_conductivity,
@@ -52,10 +51,14 @@ from .const import (
 _LOGGER = logging.getLogger(__name__)
 
 
+# Coordinator centralizes updates; entities are read-only.
+PARALLEL_UPDATES = 0
+
+
 async def async_setup_entry(
     hass: HomeAssistant, entry: ConfigEntry, async_add_entities: AddEntitiesCallback
 ) -> None:
-    coordinator = hass.data[DOMAIN][entry.entry_id]
+    coordinator = entry.runtime_data
     mac_address = entry.data[CONF_MAC_ADDRESS]
     sku = coordinator.data.get("sku")
     has_conductivity = coordinator.data.get("has_conductivity")
@@ -144,7 +147,6 @@ async def async_setup_entry(
             category=EntityCategory.DIAGNOSTIC,
             model_name=model_name,
             options=["vertical", "tilted", "horizontal", "upside_down"],
-            icon="mdi:lifebuoy",
         ),
         BlueConnectSensor(
             coordinator,
@@ -153,7 +155,6 @@ async def async_setup_entry(
             None,
             None,
             category=EntityCategory.DIAGNOSTIC,
-            icon="mdi:axis-y-arrow",
             model_name=model_name,
         ),
         BlueConnectSensor(
@@ -164,7 +165,6 @@ async def async_setup_entry(
             None,
             2,
             category=EntityCategory.DIAGNOSTIC,
-            icon="mdi:lightning-bolt",
             model_name=model_name,
             state_class=SensorStateClass.MEASUREMENT,
         ),
@@ -176,7 +176,6 @@ async def async_setup_entry(
             "mV",
             0,
             category=EntityCategory.DIAGNOSTIC,
-            icon="mdi:lightning-bolt-outline",
             model_name=model_name,
             state_class=SensorStateClass.MEASUREMENT,
         ),
@@ -197,7 +196,6 @@ async def async_setup_entry(
             SensorDeviceClass.VOLTAGE,
             "mV",
             category=EntityCategory.DIAGNOSTIC,
-            icon="mdi:battery-bluetooth",
             model_name=model_name,
             state_class=SensorStateClass.MEASUREMENT,
         ),
@@ -208,7 +206,6 @@ async def async_setup_entry(
             None,
             None,
             category=EntityCategory.DIAGNOSTIC,
-            icon="mdi:sine-wave",
             model_name=model_name,
             state_class=SensorStateClass.MEASUREMENT,
         ),
@@ -219,7 +216,6 @@ async def async_setup_entry(
             SensorDeviceClass.TIMESTAMP,
             None,
             category=EntityCategory.DIAGNOSTIC,
-            icon="mdi:clock-check",
             model_name=model_name,
         ),
         BlueConnectSensor(
@@ -229,7 +225,6 @@ async def async_setup_entry(
             None,
             None,
             category=EntityCategory.DIAGNOSTIC,
-            icon="mdi:bluetooth-transfer",
             model_name=model_name,
         ),
         BlueConnectSensor(
@@ -239,7 +234,6 @@ async def async_setup_entry(
             None,
             None,
             category=EntityCategory.DIAGNOSTIC,
-            icon="mdi:memory",
             model_name=model_name,
         ),
         BlueConnectSensor(
@@ -249,7 +243,6 @@ async def async_setup_entry(
             None,
             None,
             category=EntityCategory.DIAGNOSTIC,
-            icon="mdi:cloud",
             model_name=model_name,
         ),
         BlueConnectSensor(
@@ -259,7 +252,6 @@ async def async_setup_entry(
             SensorDeviceClass.ENUM,
             None,
             category=EntityCategory.DIAGNOSTIC,
-            icon="mdi:signal-variant",
             model_name=model_name,
             options=["passive", "active", "unknown"],
         ),
@@ -276,7 +268,6 @@ async def async_setup_entry(
             None,
             "g/L",
             2,
-            icon="mdi:shaker",
             model_name=model_name,
             state_class=SensorStateClass.MEASUREMENT,
             enabled_default=model_has_salinity(sku, has_conductivity),
@@ -298,7 +289,6 @@ class BlueConnectSensor(CoordinatorEntity, SensorEntity):
         unit: str | None = None,
         precision: int | None = None,
         category: EntityCategory | None = None,
-        icon: str | None = None,
         model_name: str = "Blue Connect",
         options: list[str] | None = None,
         state_class: SensorStateClass | None = None,
@@ -314,7 +304,6 @@ class BlueConnectSensor(CoordinatorEntity, SensorEntity):
         self._attr_suggested_display_precision = precision
         self._attr_entity_category = category
         self._attr_state_class = state_class
-        self._attr_icon = icon
         self._attr_entity_registry_enabled_default = enabled_default
         if options:
             self._attr_options = options
@@ -393,25 +382,6 @@ class BlueConnectBluetoothStatusSensor(CoordinatorEntity, SensorEntity):
             "passive_mode" if not self.coordinator.access_code else BT_STATUS_WAITING,
         )
 
-    @property
-    def icon(self) -> str:
-        icons = {
-            BT_STATUS_WAITING: "mdi:bluetooth-off",
-            BT_STATUS_CONNECTING: "mdi:bluetooth-connect",
-            BT_STATUS_AUTHENTICATING: "mdi:bluetooth-settings",
-            BT_STATUS_REQUESTING: "mdi:bluetooth-transfer",
-            BT_STATUS_READING: "mdi:bluetooth-transfer",
-            BT_STATUS_SUCCESS: "mdi:bluetooth",
-            BT_STATUS_ERROR: "mdi:bluetooth-off",
-            BT_STATUS_ERROR_RETRY: "mdi:timer-sand",
-            BT_STATUS_WRITE_FAILED: "mdi:alert-circle",
-            BT_STATUS_AUTH_FAILED: "mdi:shield-key-outline",
-            BT_STATUS_PAUSED: "mdi:pause-circle",
-            BT_STATUS_OUT_OF_RANGE: "mdi:bluetooth-off",
-            "passive_mode": "mdi:ear-hearing",
-        }
-        return icons.get(self.native_value, "mdi:bluetooth-alert")
-
 
 class BlueConnectRealTimeRSSISensor(CoordinatorEntity, RestoreSensor):
     _attr_has_entity_name = True
@@ -480,7 +450,6 @@ class BlueConnectNextAnalysisSensor(CoordinatorEntity, SensorEntity):
     _attr_entity_category = EntityCategory.DIAGNOSTIC
     _attr_device_class = SensorDeviceClass.TIMESTAMP
     _attr_translation_key = "next_analysis"
-    _attr_icon = "mdi:clock-end"
 
     def __init__(self, coordinator, mac: str, model_name: str) -> None:
         super().__init__(coordinator)
