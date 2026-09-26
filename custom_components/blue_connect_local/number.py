@@ -4,12 +4,12 @@
 import logging
 
 from homeassistant.components.number import RestoreNumber
-from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import EntityCategory
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
+from . import BlueConnectConfigEntry
 from .const import (
     CONF_CHLORINE_MODEL,
     CONF_CYA,
@@ -21,6 +21,7 @@ from .const import (
     blue_connect_device_info,
     get_blue_connect_model,
 )
+from .coordinator import BlueConnectCoordinator
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -30,7 +31,9 @@ PARALLEL_UPDATES = 1
 
 
 async def async_setup_entry(
-    hass: HomeAssistant, entry: ConfigEntry, async_add_entities: AddEntitiesCallback
+    hass: HomeAssistant,
+    entry: BlueConnectConfigEntry,
+    async_add_entities: AddEntitiesCallback,
 ) -> None:
     coordinator = entry.runtime_data
     mac = entry.data[CONF_MAC_ADDRESS]
@@ -94,7 +97,9 @@ async def async_setup_entry(
     )
 
 
-class BlueConnectUpdateIntervalNumber(CoordinatorEntity, RestoreNumber):
+class BlueConnectUpdateIntervalNumber(
+    CoordinatorEntity[BlueConnectCoordinator], RestoreNumber
+):
     _attr_has_entity_name = True
     _attr_translation_key = "scan_interval"
 
@@ -155,7 +160,9 @@ class BlueConnectUpdateIntervalNumber(CoordinatorEntity, RestoreNumber):
         self.coordinator.update_local_state({CONF_SCAN_INTERVAL: val})
 
 
-class BlueConnectWaterConfigNumber(CoordinatorEntity, RestoreNumber):
+class BlueConnectWaterConfigNumber(
+    CoordinatorEntity[BlueConnectCoordinator], RestoreNumber
+):
     _attr_has_entity_name = True
 
     def __init__(

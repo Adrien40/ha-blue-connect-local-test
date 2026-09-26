@@ -4,12 +4,12 @@
 import logging
 
 from homeassistant.components.switch import SwitchEntity
-from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import EntityCategory
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
+from . import BlueConnectConfigEntry
 from .const import (
     BT_STATUS_OUT_OF_RANGE,
     BT_STATUS_PAUSED,
@@ -19,6 +19,7 @@ from .const import (
     blue_connect_device_info,
     get_blue_connect_model,
 )
+from .coordinator import BlueConnectCoordinator
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -28,7 +29,9 @@ PARALLEL_UPDATES = 1
 
 
 async def async_setup_entry(
-    hass: HomeAssistant, entry: ConfigEntry, async_add_entities: AddEntitiesCallback
+    hass: HomeAssistant,
+    entry: BlueConnectConfigEntry,
+    async_add_entities: AddEntitiesCallback,
 ) -> None:
     coordinator = entry.runtime_data
     mac = entry.data[CONF_MAC_ADDRESS]
@@ -45,7 +48,9 @@ async def async_setup_entry(
     )
 
 
-class BlueConnectActiveMeasuresSwitch(CoordinatorEntity, SwitchEntity):
+class BlueConnectActiveMeasuresSwitch(
+    CoordinatorEntity[BlueConnectCoordinator], SwitchEntity
+):
     _attr_has_entity_name = True
     _attr_translation_key = "active_measures"
     _attr_entity_category = EntityCategory.CONFIG
@@ -100,7 +105,9 @@ class BlueConnectActiveMeasuresSwitch(CoordinatorEntity, SwitchEntity):
         )
 
 
-class BlueConnectPassiveMeasuresSwitch(CoordinatorEntity, SwitchEntity):
+class BlueConnectPassiveMeasuresSwitch(
+    CoordinatorEntity[BlueConnectCoordinator], SwitchEntity
+):
     _attr_has_entity_name = True
     _attr_translation_key = "passive_measures"
     _attr_entity_category = EntityCategory.CONFIG

@@ -22,12 +22,12 @@ from homeassistant.components.sensor import (
     SensorEntity,
     SensorStateClass,
 )
-from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import EntityCategory, UnitOfTemperature
 from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
+from . import BlueConnectConfigEntry
 from .const import (
     BT_STATUS_AUTH_FAILED,
     BT_STATUS_AUTHENTICATING,
@@ -47,6 +47,7 @@ from .const import (
     model_has_conductivity,
     model_has_salinity,
 )
+from .coordinator import BlueConnectCoordinator
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -56,7 +57,9 @@ PARALLEL_UPDATES = 0
 
 
 async def async_setup_entry(
-    hass: HomeAssistant, entry: ConfigEntry, async_add_entities: AddEntitiesCallback
+    hass: HomeAssistant,
+    entry: BlueConnectConfigEntry,
+    async_add_entities: AddEntitiesCallback,
 ) -> None:
     coordinator = entry.runtime_data
     mac_address = entry.data[CONF_MAC_ADDRESS]
@@ -277,7 +280,7 @@ async def async_setup_entry(
     async_add_entities(sensors)
 
 
-class BlueConnectSensor(CoordinatorEntity, SensorEntity):
+class BlueConnectSensor(CoordinatorEntity[BlueConnectCoordinator], SensorEntity):
     _attr_has_entity_name = True
 
     def __init__(
@@ -336,7 +339,9 @@ class BlueConnectSensor(CoordinatorEntity, SensorEntity):
         return super().available
 
 
-class BlueConnectBluetoothStatusSensor(CoordinatorEntity, SensorEntity):
+class BlueConnectBluetoothStatusSensor(
+    CoordinatorEntity[BlueConnectCoordinator], SensorEntity
+):
     _attr_has_entity_name = True
     # Entity in the Diagnostic category. Developer's choice, do not remove this comment.
     _attr_entity_category = EntityCategory.DIAGNOSTIC
@@ -383,7 +388,9 @@ class BlueConnectBluetoothStatusSensor(CoordinatorEntity, SensorEntity):
         )
 
 
-class BlueConnectRealTimeRSSISensor(CoordinatorEntity, RestoreSensor):
+class BlueConnectRealTimeRSSISensor(
+    CoordinatorEntity[BlueConnectCoordinator], RestoreSensor
+):
     _attr_has_entity_name = True
     _attr_device_class = SensorDeviceClass.SIGNAL_STRENGTH
     _attr_native_unit_of_measurement = "dBm"
@@ -444,7 +451,9 @@ class BlueConnectRealTimeRSSISensor(CoordinatorEntity, RestoreSensor):
         )
 
 
-class BlueConnectNextAnalysisSensor(CoordinatorEntity, SensorEntity):
+class BlueConnectNextAnalysisSensor(
+    CoordinatorEntity[BlueConnectCoordinator], SensorEntity
+):
     _attr_has_entity_name = True
     # Entity in the Diagnostic category. Developer's choice, do not remove this comment.
     _attr_entity_category = EntityCategory.DIAGNOSTIC

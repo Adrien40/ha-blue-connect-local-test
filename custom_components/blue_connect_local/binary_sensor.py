@@ -5,12 +5,12 @@ from homeassistant.components.binary_sensor import (
     BinarySensorDeviceClass,
     BinarySensorEntity,
 )
-from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import EntityCategory
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
+from . import BlueConnectConfigEntry
 from .const import (
     CONF_MAC_ADDRESS,
     CONF_ORP_MAX,
@@ -28,6 +28,7 @@ from .const import (
     blue_connect_device_info,
     get_blue_connect_model,
 )
+from .coordinator import BlueConnectCoordinator
 
 _DEFAULT_THRESHOLDS: dict[str, float] = {
     CONF_PH_MIN: DEFAULT_PH_MIN,
@@ -44,7 +45,9 @@ PARALLEL_UPDATES = 0
 
 
 async def async_setup_entry(
-    hass: HomeAssistant, entry: ConfigEntry, async_add_entities: AddEntitiesCallback
+    hass: HomeAssistant,
+    entry: BlueConnectConfigEntry,
+    async_add_entities: AddEntitiesCallback,
 ) -> None:
     coordinator = entry.runtime_data
     mac = entry.data[CONF_MAC_ADDRESS]
@@ -72,7 +75,9 @@ async def async_setup_entry(
     )
 
 
-class BlueConnectAlertSensor(CoordinatorEntity, BinarySensorEntity):
+class BlueConnectAlertSensor(
+    CoordinatorEntity[BlueConnectCoordinator], BinarySensorEntity
+):
     _attr_has_entity_name = True
     _attr_device_class = BinarySensorDeviceClass.PROBLEM
 
