@@ -14,7 +14,6 @@
     "bluetooth"
   ],
   "documentation": "https://github.com/Adrien40/ha-blue-connect-local",
-  "homeassistant": "2026.3.0",
   "integration_type": "device",
   "iot_class": "local_polling",
   "issue_tracker": "https://github.com/Adrien40/ha-blue-connect-local/issues",
