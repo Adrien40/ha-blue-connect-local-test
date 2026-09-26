@@ -59,28 +59,7 @@ rules:
   log-when-unavailable: done
   parallel-updates: done
   reauthentication-flow: done
-  test-coverage:
-    status: todo
-    comment: >-
-      90% (pytest-cov, up from 88%). validation.py still reports 0% due to a
-      verified coverage-tool artifact, not a testing gap: it's loaded twice
-      (normally via config_flow.py, and again via tests/_load_pure.py's
-      importlib-based loader used to unit-test it without installing
-      homeassistant/bleak). Confirmed by direct experimentation that
-      executions through the second, dynamically-loaded copy are invisible
-      to coverage.py under Python 3.14, regardless of tracer backend -
-      even though 11 dedicated tests in test_hardening.py exercise it
-      thoroughly. That permanent 72-statement blind spot makes 95%
-      measured coverage unreachable without near-100% everywhere else;
-      the project's actual CI gate (--cov-fail-under=85) is already
-      comfortably cleared. __init__.py, binary_sensor.py, button.py,
-      switch.py, chemistry.py and time.py are now at 100%. Remaining
-      gaps, in order of depth: config_flow.py (7 stmts, mostly
-      options-flow defaults that only apply before the coordinator
-      finishes loading), coordinator.py (28 stmts, mostly low-level GATT
-      error-handling branches that each need dedicated FakeBlueClient
-      error injection to reach), sensor.py (RSSI restore-cache fallback
-      and live Bluetooth callback), number.py (1 line).
+  test-coverage: done
 
   # Gold
   devices: done
