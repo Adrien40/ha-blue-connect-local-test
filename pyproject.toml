@@ -36,3 +36,14 @@ branch = true
 [tool.coverage.report]
 show_missing = true
 skip_covered = false
+
+[tool.mypy]
+python_version = "3.14"
+strict = true
+files = ["custom_components/blue_connect_local"]
+# Tracked in quality_scale.yaml (strict-typing: todo). Not yet at 0 errors -
+# the CI job runs this non-blocking until the backlog is cleared.
+
+[[tool.mypy.overrides]]
+module = ["bleak.*", "bleak_retry_connector.*"]
+ignore_missing_imports = true
