@@ -51,6 +51,7 @@ This integration talks directly to your Hydrao's BLE protocol for complete home-
 ---
 
 ### ✅ Compatibility / Requirements
+* 🏠 **Home Assistant**: version **2026.5.0 or newer** (the integration relies on a Bluetooth helper first shipped in that release).
 * 🏷️ **Supported models**: Hydrao devices broadcasting over Bluetooth (BLE) under an automatically detected name (`HYDRAO*`).
 * 🏅 **Tested on**: Validated on the **Hydrao Aloé (HYDRA_SHOWER)**, Hardware version 9.
 * 🛠️ **Required hardware**: Built-in Bluetooth adapter, USB Bluetooth dongle, or an **ESPHome Bluetooth Proxy** (recommended for range, [easy setup here](https://esphome.github.io/bluetooth-proxies/)).
@@ -63,7 +64,7 @@ This integration talks directly to your Hydrao's BLE protocol for complete home-
 * 🔄⭐ **Comfort Mode Sync** (Switch): Automatically resets the device's counter as soon as the water reaches the defined Minimum Comfort Temperature — the flagship feature of this integration.
 * 🏠 **100% Local (BLE)**: No Cloud dependency.
 * 💧 **Detailed volumes**: Total cumulative volume, current shower volume, comfort volume, wasted volume (cold water) — both per session and cumulative total.
-* ⏱️ **Detailed durations**: Duration of the current shower and time spent in the comfort zone.
+* ⏱️ **Detailed durations**: Duration of the current shower, time spent in the comfort zone, time spent in cold water, and time needed to reach comfort temperature.
 * 🎨 **Thresholds & Colors**: Set the 4 liter thresholds and pick their colors via a built-in color picker, read and updated live on the device.
 * 🌡️ **Minimum Comfort Temperature**: Adjustable in Home Assistant via a Number entity, with a validated range (0 - 50 °C) — this setting stays in Home Assistant and is never sent to the Hydrao device.
 * 🧴 **Maximum Soaping Time**: Duration before the counters reset, adjustable (10 to 600 seconds).
@@ -99,8 +100,10 @@ Copy the `custom_components/hydrao_custom` folder into the `custom_components` f
 | Entity | Unit / Type | Description |
 | :--- | :--- | :--- |
 | 🔘 **Shower Ended** | Button | Manually ends the count for the current shower. |
-| ⏱️ **Shower Duration** | min | Raw duration of the current shower. |
-| ⏱️ **Comfort Shower Duration** | min | Time spent in the comfort zone. |
+| ⏱️ **Shower Duration** | s (displayed in min) | Raw duration of the current shower. |
+| ⏱️ **Comfort Shower Duration** | s (displayed in min) | Time spent in the comfort zone. |
+| ❄️ **Cold Water Shower Duration** | s (displayed in min) | Time spent below the comfort temperature, for the current shower. Diagnostic sensor, disabled by default. |
+| ⏳ **Time to Comfort Temperature** | s | Time elapsed before the comfort temperature was reached. Unavailable until it is reached, or if the water was already warm when the connection was made. Diagnostic sensor, disabled by default. |
 | 🌡️ **Temperature** | °C | Water temperature measured live. |
 | 🚿 **Shower Volume** | L | Raw volume of the current shower. |
 | 💧 **Comfort Shower Volume** | L | Volume used once the comfort temperature is reached, for the current shower. |
@@ -133,6 +136,15 @@ Once the device is added, click **Configure** ⚙️ to:
 * Reset to factory defaults in one click.
 
 > ⚠️ **Water must be running** when you submit the form for the new thresholds to be sent to the device. If it isn't, the status will show **"🚰 Water Off"** and the setting will remain visible in the **Pending Configuration** sensor until the next shower — and if the transfer still fails once the water is back on, the integration will automatically retry on the following shower.
+
+---
+
+### 🗑️ Removal
+1. Go to **Settings** > **Devices & Services** and open **Hydrao Custom**.
+2. Click the ⋮ menu next to your device and choose **Delete**. Home Assistant removes the device and its entities.
+3. To remove the code as well: if you installed through HACS, open **HACS**, select **Hydrao Custom** and choose **Remove**; if you installed it manually, delete the `custom_components/hydrao_custom` folder. Then restart Home Assistant.
+
+> ℹ️ Removing the integration does not change anything on the Hydrao itself: its thresholds, colors and soaping time stay as they were. To set them back to their defaults first, use **Reset to factory defaults** in the options (see above).
 
 ---
 

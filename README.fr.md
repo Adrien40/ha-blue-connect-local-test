@@ -51,6 +51,7 @@ Cette intégration exploite directement le protocole BLE de votre Hydrao pour un
 ---
 
 ### ✅ Compatibilité / Prérequis
+* 🏠 **Home Assistant** : version **2026.5.0 ou plus récente** (l'intégration s'appuie sur une fonction Bluetooth livrée pour la première fois dans cette version).
 * 🏷️ **Modèles supportés** : Appareils Hydrao diffusant en Bluetooth (BLE) sous un nom détecté automatiquement (`HYDRAO*`).
 * 🏅 **Testé sur** : Validé sur le **Hydrao Aloé (HYDRA_SHOWER)**, version Hardware 9.
 * 🛠️ **Matériel requis** : Adaptateur Bluetooth interne, clé USB Bluetooth, ou **Bluetooth Proxy ESPHome** (Recommandé pour la portée, [installation facile ici](https://esphome.github.io/bluetooth-proxies/)).
@@ -63,7 +64,7 @@ Cette intégration exploite directement le protocole BLE de votre Hydrao pour un
 * 🔄⭐ **Synchro Mode Confort** (Interrupteur) : Remise à zéro automatique du compteur de l'appareil dès que l'eau atteint la Température de confort minimum définie — la fonctionnalité phare de cette intégration.
 * 🏠 **100 % Local (BLE)** : Aucune dépendance au Cloud.
 * 💧 **Volumes détaillés** : Volume total cumulé, volume de la douche en cours, volume confort, volume perdu (eau froide) — en cumul de session et en cumul total.
-* ⏱️ **Durées détaillées** : Durée de la douche en cours et durée en zone de confort.
+* ⏱️ **Durées détaillées** : Durée de la douche en cours, durée en zone de confort, durée en eau froide et temps avant d'atteindre l'eau chaude.
 * 🎨 **Seuils & Couleurs** : Réglage des 4 seuils en litres et choix de leur couleur via un sélecteur direct intégré, lus et modifiés en direct sur l'appareil.
 * 🌡️ **Température de confort minimum** : Réglable dans Home Assistant via une entité Number, avec plage validée (0 - 50 °C) — ce réglage reste dans Home Assistant, il n'est jamais envoyé à l'appareil Hydrao.
 * 🧴 **Durée maximale de savonnage** : Durée avant remise à zéro des compteurs, réglable (10 à 600 secondes).
@@ -99,8 +100,10 @@ Copiez le dossier `custom_components/hydrao_custom` dans le dossier `custom_comp
 | Entité | Unité / Type | Description |
 | :--- | :--- | :--- |
 | 🔘 **Douche Terminée** | Bouton | Termine manuellement le comptage de la douche en cours. |
-| ⏱️ **Durée Douche** | min | Durée brute de la douche en cours. |
-| ⏱️ **Durée Douche Confort** | min | Durée passée en zone de confort. |
+| ⏱️ **Durée Douche** | s (affichée en min) | Durée brute de la douche en cours. |
+| ⏱️ **Durée Douche Confort** | s (affichée en min) | Durée passée en zone de confort. |
+| ❄️ **Durée Douche Eau Froide** | s (affichée en min) | Durée passée sous la température de confort, pour la douche en cours. Capteur de diagnostic, désactivé par défaut. |
+| ⏳ **Temps avant Eau Chaude** | s | Temps écoulé avant d'atteindre la température de confort. Indisponible tant qu'elle n'est pas atteinte, ou si l'eau était déjà chaude à la connexion. Capteur de diagnostic, désactivé par défaut. |
 | 🌡️ **Température** | °C | Température de l'eau mesurée en direct. |
 | 🚿 **Volume Douche** | L | Volume brut de la douche en cours. |
 | 💧 **Volume Douche Confort** | L | Volume utilisé une fois la température de confort atteinte, pour la douche en cours. |
@@ -133,6 +136,15 @@ Une fois l'appareil ajouté, cliquez sur **Configurer** ⚙️ pour :
 * Réinitialiser aux valeurs d'usine en un clic.
 
 > ⚠️ **L'eau doit couler** au moment de la validation du formulaire pour que les nouveaux seuils soient envoyés à l'appareil. Si ce n'est pas le cas, l'état affichera **"🚰 Eau Coupée"** et le réglage restera visible dans le capteur **Configuration en Attente** jusqu'à la prochaine douche — et si l'envoi échoue malgré tout une fois l'eau relancée, l'intégration réessaiera automatiquement à la douche suivante.
+
+---
+
+### 🗑️ Suppression de l'intégration
+1. Allez dans **Paramètres** > **Appareils et services** et ouvrez **Hydrao Custom**.
+2. Cliquez sur le menu ⋮ à côté de votre appareil et choisissez **Supprimer**. Home Assistant supprime l'appareil et ses entités.
+3. Pour supprimer aussi le code : si vous avez installé via HACS, ouvrez **HACS**, sélectionnez **Hydrao Custom** et choisissez **Supprimer** ; si l'installation est manuelle, supprimez le dossier `custom_components/hydrao_custom`. Redémarrez ensuite Home Assistant.
+
+> ℹ️ La suppression de l'intégration ne modifie rien sur le Hydrao lui-même : ses seuils, ses couleurs et sa durée de savonnage restent tels quels. Pour les remettre d'abord aux valeurs d'usine, utilisez **Réinitialiser aux valeurs d'usine** dans les options (voir plus haut).
 
 ---
 

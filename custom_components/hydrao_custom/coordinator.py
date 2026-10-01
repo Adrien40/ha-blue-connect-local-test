@@ -52,10 +52,16 @@ from .const import (
     DEFAULT_MIN_TEMP_THRESHOLD,
     DEFAULT_SOAPING_DURATION,
     DOMAIN,
+    DURATION_TICKS_PER_SECOND,
     MAX_NEW_SHOWER_ATTEMPTS,
     HydraoConfigEntry,
 )
-from .util import thresholds_strictly_increasing
+from .util import (
+    clamp_soaping_duration,
+    comfort_fraction,
+    duration_ticks_delta,
+    thresholds_strictly_increasing,
+)
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -146,7 +152,9 @@ class HydraoDataUpdateCoordinator(DataUpdateCoordinator):
         self._last_processed_options = dict(opts) if entry.options else {}
 
         if "soaping_duration" in opts:
-            self.static_data["soaping_duration"] = int(opts["soaping_duration"])
+            self.static_data["soaping_duration"] = clamp_soaping_duration(
+                int(opts["soaping_duration"])
+            )
 
         if "threshold_1" in opts:
             self.static_data["thresholds"] = [
@@ -195,15 +203,29 @@ class HydraoDataUpdateCoordinator(DataUpdateCoordinator):
         # ADVERTISEMENT_GRACE_PERIOD above for the reasoning.
         self._last_advertisement_time = 0.0
 
+        # All durations are in seconds.
         self.session_wasted_volume = 0.0
         self.session_shower_duration_comfort = 0.0
+        self.session_shower_duration_cold = 0.0
         self.session_shower_volume_comfort = 0.0
+        # Total duration of the session, accumulated from successive
+        # deltas of the device's uint16 tick counter (so it keeps counting
+        # correctly past the counter's wrap-around).
+        self.session_duration_total = 0.0
+        # Seconds of cold water before comfort was first reached in the
+        # current session; None while not reached, or when it cannot be
+        # known (the very first reading of a session was already warm).
+        self.session_time_to_comfort: float | None = None
+        self._session_comfort_seen = False
 
         self.lifetime_wasted_volume_total = 0.0
         self.lifetime_shower_volume_comfort_total = 0.0
 
         self._last_shower_raw = 0.0
-        self._last_duration_raw = 0.0
+        self._last_duration_ticks = 0
+        # Temperature of the previous reading in the current session, used
+        # to split an interval that straddles the comfort threshold.
+        self._last_temp_raw: float | None = None
 
         self._thresholds_read_for_session = False
         self._thresholds_need_reread = False
@@ -301,7 +323,14 @@ class HydraoDataUpdateCoordinator(DataUpdateCoordinator):
         """
         if "soaping_duration" in options:
             live_soaping = self.static_data.get("soaping_duration")
-            new_soaping = int(options["soaping_duration"])
+            requested_soaping = int(options["soaping_duration"])
+            new_soaping = clamp_soaping_duration(requested_soaping)
+            if new_soaping != requested_soaping:
+                _LOGGER.warning(
+                    "Soaping duration %ds is out of range, using %ds instead",
+                    requested_soaping,
+                    new_soaping,
+                )
             if live_soaping is None or new_soaping != live_soaping:
                 self.pending_soaping_duration = new_soaping
 
@@ -512,8 +541,9 @@ class HydraoDataUpdateCoordinator(DataUpdateCoordinator):
                 return False
 
     @staticmethod
-    def _duration_raw_seconds(dur_data: bytearray) -> float:
-        return ((dur_data[1] << 8) | dur_data[0]) / 50.0
+    def _duration_raw_ticks(dur_data: bytearray) -> int:
+        """Return the device's raw duration counter (uint16, 1/50 s ticks)."""
+        return (dur_data[1] << 8) | dur_data[0]
 
     async def _handle_pending_new_shower(self, client: BleakClient) -> None:
         if not self.pending_new_shower:
@@ -864,7 +894,7 @@ class HydraoDataUpdateCoordinator(DataUpdateCoordinator):
 
         total_raw = (vol_data[1] << 8) | vol_data[0]
         shower_raw = float((vol_data[3] << 8) | vol_data[2])
-        duration_raw = self._duration_raw_seconds(dur_data) / 60.0
+        duration_ticks = self._duration_raw_ticks(dur_data)
         temp_raw = ((temp_data[1] << 8) | temp_data[0]) / 2.0
 
         # time.monotonic(), not time.time(): last_seen_time is only ever
@@ -889,7 +919,7 @@ class HydraoDataUpdateCoordinator(DataUpdateCoordinator):
             self._preserve_wasted_on_next_reset = False
             self.force_reset_flag = False
             delta_vol = shower_raw
-            delta_dur = duration_raw
+            delta_ticks = duration_ticks
         else:
             if shower_raw < self._last_shower_raw:
                 self._reset_session_state(
@@ -908,25 +938,49 @@ class HydraoDataUpdateCoordinator(DataUpdateCoordinator):
                     self.new_shower_attempts = 0
                     self.set_bt_status(BT_STATUS_SUCCESS)
                 delta_vol = shower_raw
-                delta_dur = duration_raw
+                delta_ticks = duration_ticks
             else:
                 delta_vol = shower_raw - self._last_shower_raw
-                delta_dur = duration_raw - self._last_duration_raw
+                delta_ticks = duration_ticks_delta(
+                    self._last_duration_ticks, duration_ticks
+                )
 
         if self._awaiting_manual_reset_confirmation:
             delta_vol = 0.0
-            delta_dur = 0.0
+            delta_ticks = 0
 
         delta_vol = max(0.0, delta_vol)
-        delta_dur = max(0.0, delta_dur)
+        delta_dur = max(0, delta_ticks) / DURATION_TICKS_PER_SECOND
 
-        if temp_raw < self.min_temp_threshold:
-            self.session_wasted_volume += delta_vol
-            self.lifetime_wasted_volume_total += delta_vol
-        else:
-            self.session_shower_duration_comfort += delta_dur
-            self.session_shower_volume_comfort += delta_vol
-            self.lifetime_shower_volume_comfort_total += delta_vol
+        # Split the interval between comfort and cold according to how the
+        # temperature evolved since the previous reading, instead of
+        # attributing everything to the current reading's temperature.
+        previous_temp = self._last_temp_raw
+        comfort_share = comfort_fraction(
+            previous_temp, temp_raw, self.min_temp_threshold
+        )
+
+        comfort_vol = delta_vol * comfort_share
+        cold_vol = delta_vol - comfort_vol
+        comfort_dur = delta_dur * comfort_share
+        cold_dur = delta_dur - comfort_dur
+
+        self.session_wasted_volume += cold_vol
+        self.lifetime_wasted_volume_total += cold_vol
+        self.session_shower_duration_cold += cold_dur
+        self.session_shower_volume_comfort += comfort_vol
+        self.lifetime_shower_volume_comfort_total += comfort_vol
+        self.session_shower_duration_comfort += comfort_dur
+        self.session_duration_total += delta_dur
+
+        if comfort_share > 0.0 and not self._session_comfort_seen:
+            self._session_comfort_seen = True
+            # Only report a time-to-comfort when we actually watched the
+            # water go from cold to comfortable. If the session's very
+            # first reading was already warm, the cold phase (if any)
+            # happened before we connected and cannot be measured.
+            if previous_temp is not None and previous_temp < self.min_temp_threshold:
+                self.session_time_to_comfort = self.session_shower_duration_cold
 
         if (
             self.auto_sync_at_comfort
@@ -953,7 +1007,8 @@ class HydraoDataUpdateCoordinator(DataUpdateCoordinator):
             self._thresholds_need_reread = True
 
         self._last_shower_raw = shower_raw
-        self._last_duration_raw = duration_raw
+        self._last_duration_ticks = duration_ticks
+        self._last_temp_raw = temp_raw
         self.last_seen_time = current_time
 
         new_data = {
@@ -970,13 +1025,15 @@ class HydraoDataUpdateCoordinator(DataUpdateCoordinator):
             "shower_volume_comfort_total": self.lifetime_shower_volume_comfort_total,
             "shower_volume_comfort": self.session_shower_volume_comfort,
             "shower_duration_comfort": self.session_shower_duration_comfort,
+            "shower_duration_cold": self.session_shower_duration_cold,
+            "time_to_comfort": self.session_time_to_comfort,
             "raw": {
                 "shower_volume_raw": 0.0
                 if self._awaiting_manual_reset_confirmation
                 else shower_raw,
                 "shower_duration": 0.0
                 if self._awaiting_manual_reset_confirmation
-                else duration_raw,
+                else self.session_duration_total,
             },
         }
 
@@ -988,10 +1045,21 @@ class HydraoDataUpdateCoordinator(DataUpdateCoordinator):
         self.async_set_updated_data(self.last_valid_data)
 
     def _reset_session_state(self, preserve_wasted: bool = False) -> None:
+        """Zero the per-session accumulators.
+
+        With `preserve_wasted` (comfort-mode auto-sync, where the physical
+        shower goes on), everything that describes the cold phase is kept:
+        wasted volume, cold duration and the time it took to reach comfort.
+        """
         if not preserve_wasted:
             self.session_wasted_volume = 0.0
+            self.session_shower_duration_cold = 0.0
+            self.session_time_to_comfort = None
+            self._session_comfort_seen = False
         self.session_shower_duration_comfort = 0.0
         self.session_shower_volume_comfort = 0.0
+        self.session_duration_total = 0.0
+        self._last_temp_raw = None
         self._thresholds_read_for_session = False
 
     def _evaluate_offline_timeout(self) -> None:
@@ -1024,6 +1092,8 @@ class HydraoDataUpdateCoordinator(DataUpdateCoordinator):
         self.last_valid_data = dict(self.last_valid_data)
         if reset_wasted:
             self.last_valid_data["wasted_volume"] = 0.0
+            self.last_valid_data["shower_duration_cold"] = 0.0
+            self.last_valid_data["time_to_comfort"] = None
         self.last_valid_data["shower_volume_comfort"] = 0.0
         self.last_valid_data["shower_duration_comfort"] = 0.0
         self.last_valid_data["flow_rate"] = 0.0

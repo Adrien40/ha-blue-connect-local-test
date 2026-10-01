@@ -13,7 +13,13 @@ from homeassistant.core import callback
 from homeassistant.data_entry_flow import section
 from homeassistant.helpers import selector
 
-from .const import DEFAULT_MIN_TEMP_THRESHOLD, DEFAULT_SOAPING_DURATION, DOMAIN
+from .const import (
+    DEFAULT_MIN_TEMP_THRESHOLD,
+    DEFAULT_SOAPING_DURATION,
+    DOMAIN,
+    MAX_SOAPING_DURATION,
+    MIN_SOAPING_DURATION,
+)
 from .util import is_valid_temp, pairwise_increasing_errors
 
 # NOTE: Number selectors below (min_temp_threshold, soaping_duration,
@@ -235,7 +241,9 @@ class HydraoOptionsFlowHandler(config_entries.OptionsFlow):
                         errors[key] = "value_out_of_range"
 
                 soaping_val = user_input.get("soaping_duration")
-                if soaping_val is not None and (soaping_val < 10 or soaping_val > 600):
+                if soaping_val is not None and not (
+                    MIN_SOAPING_DURATION <= soaping_val <= MAX_SOAPING_DURATION
+                ):
                     errors["soaping_duration"] = "soaping_duration_out_of_range"
 
                 comfort_temp_val = user_input.get("min_temp_threshold")

@@ -27,6 +27,19 @@ CHAR_TEMPERATURE_RAW = "0000ca32-0000-1000-8000-00805f9b34fb"
 CHAR_SOAPING_DURATION = "0000ca33-0000-1000-8000-00805f9b34fb"
 
 DEFAULT_SOAPING_DURATION = 180
+MIN_SOAPING_DURATION = 10
+MAX_SOAPING_DURATION = 600
+
+# The device reports its shower duration as a little-endian uint16 counting
+# 1/50 s ticks. Everything inside the integration is expressed in seconds
+# (derived from integer tick differences); conversion to minutes, if wanted,
+# is left to Home Assistant's unit display.
+DURATION_TICKS_PER_SECOND = 50
+DURATION_TICKS_WRAP = 1 << 16
+# A drop of the raw duration counter is only interpreted as a uint16
+# wrap-around when the previous reading was within this many ticks (10 s)
+# of the counter's maximum. Any other drop is a device-side reset/glitch.
+DURATION_WRAP_WINDOW_TICKS = 10 * DURATION_TICKS_PER_SECOND
 
 DEFAULT_MIN_TEMP_THRESHOLD = 33.0
 
