@@ -27,3 +27,6 @@ habluetooth==6.1.0
 aiousbwatcher==1.1.2
 serialx==1.7.0
 aioesphomeapi==44.21.0
+
+# Static typing (CI: mypy --strict).
+mypy==2.3.1
