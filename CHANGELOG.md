@@ -6,9 +6,6 @@
 
 This release is about accuracy and reliability: shower durations and the cold / comfort split are now correct, two new diagnostic sensors show how long the water stayed cold, and the integration is fully tested and strictly typed.
 
-### 🚨 Breaking changes
-- **Home Assistant 2026.5.0 or newer** (`hacs.json`, was 2025.1.0): the integration now relies on a Bluetooth helper first shipped in that release. Update Home Assistant before updating the integration.
-
 ### ✨ New features
 - **Cold Water Shower Duration** sensor: time spent below the comfort temperature during the current shower. Diagnostic, disabled by default.
 - **Time to Comfort Temperature** sensor: how long the water took to reach the comfort temperature. It stays *unknown* when the water was already warm at connection, because the cold phase cannot be measured then. Diagnostic, disabled by default.
@@ -17,6 +14,7 @@ This release is about accuracy and reliability: shower durations and the cold / 
 - The **Bluetooth Signal** (RSSI) sensor is now disabled by default: it is a support tool. Enable it from the entity settings to check the Bluetooth range.
 
 ### 🐛 Bug fixes
+- **The minimum Home Assistant version is now declared correctly: 2026.5.0** (`hacs.json`, was 2025.1.0). The integration has always needed a Bluetooth function (`async_clear_advertisement_history`) that first shipped in Home Assistant 2026.5.0, so on an earlier version it could not load at all.
 - **Shower durations are now correct beyond about 21 minutes.** The device counts time in 1/50 s steps on 16 bits, so its counter wraps around every 21.8 minutes; the wrap-around is now handled, and the durations no longer restart from zero.
 - **The cold / comfort split is more accurate.** When the temperature crosses the comfort threshold between two readings, the volume and the time are now split at the crossing point, instead of being counted entirely on the side of the latest reading.
 - **Maximum Soaping Time out of range** (outside 10–600 s) is brought back into range with a warning in the log, instead of being sent to the device as is.

@@ -6,9 +6,6 @@
 
 Cette version est consacrée à la précision et à la fiabilité : les durées de douche et la répartition eau froide / confort sont désormais correctes, deux nouveaux capteurs de diagnostic montrent combien de temps l'eau est restée froide, et l'intégration est entièrement testée et typée strictement.
 
-### 🚨 Changements majeurs
-- **Home Assistant 2026.5.0 ou plus récent** (`hacs.json`, auparavant 2025.1.0) : l'intégration s'appuie maintenant sur une fonction Bluetooth livrée pour la première fois dans cette version. Mettez Home Assistant à jour avant l'intégration.
-
 ### ✨ Nouveautés
 - Capteur **Durée Douche Eau Froide** : temps passé sous la température de confort pendant la douche en cours. Diagnostic, désactivé par défaut.
 - Capteur **Temps avant Eau Chaude** : temps mis par l'eau pour atteindre la température de confort. Il reste *inconnu* quand l'eau était déjà chaude à la connexion, car la phase froide ne peut alors pas être mesurée. Diagnostic, désactivé par défaut.
@@ -17,6 +14,7 @@ Cette version est consacrée à la précision et à la fiabilité : les durées 
 - Le capteur **Signal Bluetooth** (RSSI) est maintenant désactivé par défaut : c'est un outil d'assistance. Activez-le dans les paramètres de l'entité pour vérifier la portée Bluetooth.
 
 ### 🐛 Corrections
+- **La version minimale de Home Assistant est maintenant déclarée correctement : 2026.5.0** (`hacs.json`, auparavant 2025.1.0). L'intégration a toujours eu besoin d'une fonction Bluetooth (`async_clear_advertisement_history`) livrée pour la première fois dans Home Assistant 2026.5.0 : sur une version antérieure, elle ne pouvait pas se charger du tout.
 - **Les durées de douche sont maintenant correctes au-delà d'environ 21 minutes.** L'appareil compte le temps par pas de 1/50 s sur 16 bits, donc son compteur repart de zéro toutes les 21,8 minutes ; ce dépassement est maintenant géré, et les durées ne repartent plus de zéro.
 - **La répartition eau froide / confort est plus précise.** Quand la température franchit le seuil de confort entre deux relevés, le volume et le temps sont maintenant partagés au point de passage, au lieu d'être comptés entièrement du côté du dernier relevé.
 - **Durée maximale de savonnage hors limites** (hors de 10–600 s) : il est ramené dans la plage avec un avertissement dans le journal, au lieu d'être envoyé tel quel à l'appareil.
