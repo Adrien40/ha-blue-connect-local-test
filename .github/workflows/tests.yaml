@@ -26,4 +26,5 @@ jobs:
         run: pip install -r requirements-test.txt
 
       - name: Run tests with coverage
-        run: pytest --cov --cov-fail-under=60  # target: 95, as in blue_connect_local
+        # Silver quality scale (test-coverage): above 95% for the whole integration.
+        run: pytest --cov --cov-fail-under=95
