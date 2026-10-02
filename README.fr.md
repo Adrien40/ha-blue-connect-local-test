@@ -199,16 +199,6 @@ actions:
       entity_id: button.hydrao_eeff_douche_terminee
 ```
 
-**Baisser la température de confort la nuit**
-```yaml
-actions:
-  - action: number.set_value
-    target:
-      entity_id: number.hydrao_eeff_temperature_de_confort_minimum
-    data:
-      value: 34
-```
-
 ---
 
 ### ⚠️ Limitations connues
