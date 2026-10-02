@@ -6,9 +6,8 @@
 # assumed. `todo` means the requirement is not met yet; `exempt` means it
 # does not apply, with the reason given in the comment.
 #
-# manifest.json declares "quality_scale": "bronze": every Bronze rule below is
-# done or exempt. Silver is not reached yet; its only open rule is
-# test-coverage.
+# manifest.json declares "quality_scale": "platinum": every rule below, from
+# Bronze to Platinum, is done or exempt, and none is todo.
 #
 # This level is self-declared. hassfest only validates this file for core
 # integrations and skips custom ones. The rules that hassfest can check
@@ -16,7 +15,9 @@
 # were run against this integration with hassfest's own validators and pass.
 #
 # A few statuses are checked against the code by tests/test_quality_scale.py,
-# so this file cannot silently drift from what the repository really does.
+# so this file cannot silently drift from what the repository really does:
+# test-coverage is tied to the threshold enforced by the Tests workflow, and
+# strict-typing to the `mypy --strict` step of the Typing workflow.
 rules:
   # --- Bronze ---------------------------------------------------------------
   action-setup:
@@ -152,13 +153,15 @@ rules:
     status: exempt
     comment: The integration has no authentication.
   test-coverage:
-    status: todo
+    status: done
     comment: >-
-      Required: above 95% for every module. At the time of writing (lines and
-      branches) the total is ~65%. At 100%: config_flow.py, entity.py,
-      util.py, const.py. Below the bar: coordinator.py 50%, sensor.py 49%,
-      entity_helpers.py 54%, switch.py 61%, number.py 64%, __init__.py 75%,
-      button.py 81%.
+      Every module of the integration is covered at 100% (lines and
+      branches), well above the 95% the rule asks for, and the Tests workflow
+      fails the build below 95% (see .coveragerc). The BLE layer is tested
+      with a scripted fake client (tests/helpers.py), so connection cycles,
+      config writes, the "new shower" reboot and the background loop run
+      without any radio; entities and services are driven through Home
+      Assistant itself (the `integration` fixture in tests/conftest.py).
 
   # --- Gold -----------------------------------------------------------------
   devices:

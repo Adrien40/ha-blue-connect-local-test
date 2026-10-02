@@ -218,3 +218,27 @@ def test_common_modules_status_matches_the_entity_classes(rules):
     shared = all(issubclass(cls, HydraoEntity) for cls in entity_classes)
 
     assert (status_of(rules, "common-modules") == "done") is shared
+
+
+def test_test_coverage_status_matches_the_ci_threshold(rules):
+    """`test-coverage` may only be `done` while the Tests workflow really fails
+    the build below the 95% the rule asks for."""
+    workflow = (ROOT / ".github" / "workflows" / "tests.yaml").read_text()
+    found = re.search(r"--cov-fail-under=(\d+)", workflow)
+    threshold = int(found.group(1)) if found else 0
+
+    assert (status_of(rules, "test-coverage") == "done") is (threshold >= 95)
+
+
+def test_coverage_is_measured_on_the_integration_with_branches():
+    config = (ROOT / ".coveragerc").read_text()
+
+    assert "source = custom_components/hydrao_custom" in config
+    assert "branch = True" in config
+
+
+def test_strict_typing_status_matches_the_typing_workflow(rules):
+    workflow = (ROOT / ".github" / "workflows" / "mypy.yaml").read_text()
+    enforced = "mypy --strict custom_components/hydrao_custom" in workflow
+
+    assert (status_of(rules, "strict-typing") == "done") is enforced

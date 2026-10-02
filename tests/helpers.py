@@ -3,6 +3,8 @@
 
 """Helpers shared by the Hydrao test modules."""
 
+from typing import Self
+
 
 def u16le(value: int) -> tuple[int, int]:
     """Split a 16-bit value into (low_byte, high_byte), little-endian."""
@@ -29,3 +31,62 @@ def make_frames(
     temp_data = bytearray([tm_lo, tm_hi])
 
     return vol_data, dur_data, temp_data
+
+
+class FakeBleClient:
+    """Minimal stand-in for a connected `BleakClient`.
+
+    `reads` maps a characteristic UUID to what reading it returns: bytes, an
+    exception instance (raised), or a list used as a queue (its last element
+    repeats once the others have been consumed). Reading an unknown
+    characteristic raises BleakError, like a missing GATT characteristic.
+
+    `connected_checks` is how many times the integration may ask
+    `is_connected` before the link "drops", which is what ends the read loop.
+    """
+
+    def __init__(
+        self,
+        reads: dict[str, object] | None = None,
+        connected_checks: int = 1,
+        write_errors: dict[str, Exception] | None = None,
+    ) -> None:
+        self.reads: dict[str, object] = dict(reads or {})
+        self.write_errors: dict[str, Exception] = dict(write_errors or {})
+        self.writes: list[tuple[str, bytes]] = []
+        self.read_log: list[str] = []
+        self._checks_left = connected_checks
+
+    @property
+    def is_connected(self) -> bool:
+        if self._checks_left <= 0:
+            return False
+        self._checks_left -= 1
+        return True
+
+    async def __aenter__(self) -> Self:
+        return self
+
+    async def __aexit__(self, *exc_info: object) -> bool:
+        return False
+
+    async def read_gatt_char(self, uuid: str) -> bytearray:
+        from bleak.exc import BleakError
+
+        self.read_log.append(uuid)
+        value = self.reads.get(uuid)
+        if isinstance(value, list):
+            value = value.pop(0) if len(value) > 1 else value[0]
+        if value is None:
+            raise BleakError(f"no characteristic {uuid}")
+        if isinstance(value, Exception):
+            raise value
+        return bytearray(value)  # type: ignore[arg-type]
+
+    async def write_gatt_char(
+        self, uuid: str, data: bytes, response: bool = False
+    ) -> None:
+        error = self.write_errors.get(uuid)
+        if error is not None:
+            raise error
+        self.writes.append((uuid, bytes(data)))

@@ -1,5 +1,17 @@
 # Journal des modifications
 
+## Non publié
+
+- Échelle de qualité d'intégration : niveau Platinum déclaré
+  (`quality_scale.yaml`, `manifest.json`). La dernière règle ouverte,
+  `test-coverage`, est remplie : chaque module est couvert à 100 % (lignes et
+  branches) et le workflow de tests échoue désormais sous 95 %.
+- 178 nouveaux tests : cycle de connexion BLE (faux client scripté), écritures
+  de configuration, redémarrage « nouvelle douche », boucle d'arrière-plan,
+  capteurs, bouton, nombre, interrupteur et cycle de vie de l'entrée.
+- `quality_scale.yaml` est aussi vérifié par rapport au seuil de couverture de
+  la CI et à l'étape `mypy --strict`.
+
 ## 1.1.0
 
 - Nouveaux capteurs : durée de douche à l'eau froide et temps pour atteindre la température de confort.

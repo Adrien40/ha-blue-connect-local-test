@@ -72,3 +72,70 @@ def mock_setup_entry():
         "custom_components.hydrao_custom.async_setup_entry", return_value=True
     ) as mock:
         yield mock
+
+
+@pytest.fixture
+async def integration(hass, mock_entry, bluetooth_loaded):
+    """Set the whole integration up through Home Assistant, with the
+    Bluetooth layer stubbed out.
+
+    The passive listener, the background BLE loop and the RSSI sensor's
+    Bluetooth callbacks are replaced, so platforms, entities, services and
+    the config entry lifecycle can be exercised for real without a radio.
+
+    Yields a namespace with `entry`, `coordinator`, `unsubscribe` (what the
+    coordinator's listener returned), `rssi_callbacks` (the callbacks the RSSI
+    sensor registered) and `service_info` (what the RSSI sensor read at
+    startup, replaceable before setup through `set_last_info`)."""
+    import asyncio
+    from types import SimpleNamespace
+    from unittest.mock import MagicMock
+
+    from homeassistant.config_entries import ConfigEntryState
+
+    from custom_components.hydrao_custom.coordinator import (
+        HydraoDataUpdateCoordinator,
+    )
+
+    sensor_module = "custom_components.hydrao_custom.sensor"
+    unsubscribe = MagicMock(name="unsubscribe_bluetooth_listener")
+    rssi_callbacks: list = []
+
+    async def idle_loop(self) -> None:
+        await asyncio.Event().wait()
+
+    def register(hass_, callback_, matcher, mode):
+        rssi_callbacks.append(callback_)
+        return MagicMock(name="unsubscribe_rssi")
+
+    mock_entry.add_to_hass(hass)
+    with (
+        patch.object(
+            HydraoDataUpdateCoordinator,
+            "async_start_bluetooth_listener",
+            return_value=unsubscribe,
+        ),
+        patch.object(HydraoDataUpdateCoordinator, "async_run_loop", idle_loop),
+        patch(
+            f"{sensor_module}.async_last_service_info",
+            return_value=MagicMock(rssi=-70),
+        ),
+        patch(f"{sensor_module}.async_register_callback", side_effect=register),
+    ):
+        assert await hass.config_entries.async_setup(mock_entry.entry_id)
+        await hass.async_block_till_done()
+
+        yield SimpleNamespace(
+            entry=mock_entry,
+            coordinator=mock_entry.runtime_data,
+            unsubscribe=unsubscribe,
+            rssi_callbacks=rssi_callbacks,
+        )
+
+        # A test may already have unloaded or removed the entry.
+        if (
+            hass.config_entries.async_get_entry(mock_entry.entry_id) is not None
+            and mock_entry.state is ConfigEntryState.LOADED
+        ):
+            await hass.config_entries.async_unload(mock_entry.entry_id)
+            await hass.async_block_till_done()
