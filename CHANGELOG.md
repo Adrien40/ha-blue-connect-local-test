@@ -39,6 +39,7 @@ This release is about accuracy and reliability: shower durations and the cold / 
 
 ### 📚 Documentation
 - `README.md` / `README.fr.md`: minimum Home Assistant version, the new sensors, and new sections *How Data Is Updated*, *Use Cases*, *Automation Examples*, *Known Limitations* and *Removal*.
+- A note on the per-shower and cumulative volume sensors, and status badges (CI, license, quality scale).
 
 ### 📋 Upgrade notes
 - **Duration sensors keep their unit**: Home Assistant converts them automatically, so an existing *Shower Duration* still shows minutes.

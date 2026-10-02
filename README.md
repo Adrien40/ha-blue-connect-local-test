@@ -3,6 +3,13 @@
 # Hydrao Custom for Home Assistant 🚿
 [![hacs_badge](https://img.shields.io/badge/HACS-Custom-orange.svg)](https://github.com/hacs/integration)
 [![GitHub Release](https://img.shields.io/github/v/release/Adrien40/ha-hydrao-custom)](https://github.com/Adrien40/ha-hydrao-custom/releases)
+[![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](LICENSE)
+[![Tests](https://img.shields.io/github/actions/workflow/status/Adrien40/ha-hydrao-custom/tests.yaml?branch=main&label=tests)](https://github.com/Adrien40/ha-hydrao-custom/actions/workflows/tests.yaml)
+[![HACS](https://img.shields.io/github/actions/workflow/status/Adrien40/ha-hydrao-custom/hacs.yaml?branch=main&label=hacs)](https://github.com/Adrien40/ha-hydrao-custom/actions/workflows/hacs.yaml)
+[![Hassfest](https://img.shields.io/github/actions/workflow/status/Adrien40/ha-hydrao-custom/hassfest.yaml?branch=main&label=hassfest)](https://github.com/Adrien40/ha-hydrao-custom/actions/workflows/hassfest.yaml)
+[![Linting](https://img.shields.io/github/actions/workflow/status/Adrien40/ha-hydrao-custom/ruff.yaml?branch=main&label=lint)](https://github.com/Adrien40/ha-hydrao-custom/actions/workflows/ruff.yaml)
+[![Typing](https://img.shields.io/github/actions/workflow/status/Adrien40/ha-hydrao-custom/mypy.yaml?branch=main&label=mypy%20--strict)](https://github.com/Adrien40/ha-hydrao-custom/actions/workflows/mypy.yaml)
+[![Quality Scale](https://img.shields.io/badge/HA%20Quality%20Scale-Platinum-e5e4e2)](custom_components/hydrao_custom/quality_scale.yaml)
 
 A **100% local integration for Home Assistant** that talks directly over Bluetooth Low Energy (BLE) with your Hydrao shower device, to track your water usage shower after shower, with zero Cloud dependency. 🛡️
 
@@ -121,6 +128,8 @@ Copy the `custom_components/hydrao_custom` folder into the `custom_components` f
 | 📶 **Bluetooth Signal** | dBm | Real-time received Bluetooth signal strength. Diagnostic sensor, disabled by default: enable it from the entity settings to check the Bluetooth range. |
 
 ℹ️ *The device's Firmware, Hardware, and Unique Identifier are exposed by Home Assistant at the device level*
+
+ℹ️ *The per-shower sensors (**Shower Volume**, **Comfort Shower Volume**, **Wasted Volume (Cold Water)**) restart from zero at every shower. For long-term statistics and the Water dashboard, use the **Total Cumulative** sensors instead.*
 
 ---
 

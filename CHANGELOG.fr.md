@@ -39,6 +39,7 @@ Cette version est consacrée à la précision et à la fiabilité : les durées 
 
 ### 📚 Documentation
 - `README.md` / `README.fr.md` : version minimale de Home Assistant, les nouveaux capteurs, et les nouvelles sections *Mise à jour des données*, *Cas d'usage*, *Exemples d'automatisations*, *Limitations connues* et *Suppression de l'intégration*.
+- Une note sur les capteurs de volume par douche et cumulés, et des badges d'état (CI, licence, échelle de qualité).
 
 ### 📋 Notes de mise à jour
 - **Les capteurs de durée gardent leur unité** : Home Assistant les convertit automatiquement, donc une *Durée Douche* existante continue de s'afficher en minutes.

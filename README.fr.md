@@ -3,6 +3,13 @@
 # Hydrao Custom pour Home Assistant 🚿
 [![hacs_badge](https://img.shields.io/badge/HACS-Custom-orange.svg)](https://github.com/hacs/integration)
 [![GitHub Release](https://img.shields.io/github/v/release/Adrien40/ha-hydrao-custom)](https://github.com/Adrien40/ha-hydrao-custom/releases)
+[![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](LICENSE)
+[![Tests](https://img.shields.io/github/actions/workflow/status/Adrien40/ha-hydrao-custom/tests.yaml?branch=main&label=tests)](https://github.com/Adrien40/ha-hydrao-custom/actions/workflows/tests.yaml)
+[![HACS](https://img.shields.io/github/actions/workflow/status/Adrien40/ha-hydrao-custom/hacs.yaml?branch=main&label=hacs)](https://github.com/Adrien40/ha-hydrao-custom/actions/workflows/hacs.yaml)
+[![Hassfest](https://img.shields.io/github/actions/workflow/status/Adrien40/ha-hydrao-custom/hassfest.yaml?branch=main&label=hassfest)](https://github.com/Adrien40/ha-hydrao-custom/actions/workflows/hassfest.yaml)
+[![Linting](https://img.shields.io/github/actions/workflow/status/Adrien40/ha-hydrao-custom/ruff.yaml?branch=main&label=lint)](https://github.com/Adrien40/ha-hydrao-custom/actions/workflows/ruff.yaml)
+[![Typing](https://img.shields.io/github/actions/workflow/status/Adrien40/ha-hydrao-custom/mypy.yaml?branch=main&label=mypy%20--strict)](https://github.com/Adrien40/ha-hydrao-custom/actions/workflows/mypy.yaml)
+[![Quality Scale](https://img.shields.io/badge/HA%20Quality%20Scale-Platinum-e5e4e2)](custom_components/hydrao_custom/quality_scale.yaml)
 
 Une **intégration 100 % locale pour Home Assistant** qui dialogue directement en Bluetooth Low Energy (BLE) avec votre appareil de douche Hydrao, pour suivre votre consommation d'eau douche après douche, sans aucune dépendance au Cloud. 🛡️
 
@@ -121,6 +128,8 @@ Copiez le dossier `custom_components/hydrao_custom` dans le dossier `custom_comp
 | 📶 **Signal Bluetooth** | dBm | Force du signal Bluetooth reçu en temps réel. Capteur de diagnostic, désactivé par défaut : activez-le dans les paramètres de l'entité pour vérifier la portée Bluetooth. |
 
 ℹ️ *Le Firmware, l'Hardware et l'Identifiant Unique de l'appareil sont exposés par Home Assistant au niveau de la fiche appareil*
+
+ℹ️ *Les capteurs par douche (**Volume Douche**, **Volume Douche Confort**, **Volume Perdu (Eau Froide)**) repartent de zéro à chaque douche. Pour les statistiques à long terme et le tableau de bord Eau, utilisez plutôt les capteurs **Cumulé**.*
 
 ---
 

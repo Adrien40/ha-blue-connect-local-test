@@ -3,6 +3,7 @@
 
 """The documentation rules marked `done` must have a section in both READMEs."""
 
+import json
 import re
 from pathlib import Path
 
@@ -61,3 +62,50 @@ def test_automation_examples_are_valid_yaml(readme):
     assert len(blocks) >= 3
     for block in blocks:
         assert yaml.safe_load(block)
+
+
+# ---------------------------------------------------------------------------
+# Badges
+# ---------------------------------------------------------------------------
+
+REPOSITORY = "Adrien40/ha-hydrao-custom"
+
+
+@pytest.mark.parametrize("readme", ["README.md", "README.fr.md"])
+def test_badges_point_at_this_repository(readme):
+    """Badges are easy to copy from another project and forget to adapt."""
+    text = (ROOT / readme).read_text(encoding="utf-8")
+
+    assert "blue-connect" not in text.lower()
+    assert "blue_connect" not in text.lower()
+    for repository in re.findall(r"github\.com/(Adrien40/[\w.-]+)", text):
+        assert repository == REPOSITORY, repository
+    for repository in re.findall(
+        r"shields\.io/github/[\w-]+/(?:status/)?(Adrien40/[\w.-]+)", text
+    ):
+        assert repository == REPOSITORY, repository
+
+
+@pytest.mark.parametrize("readme", ["README.md", "README.fr.md"])
+def test_workflow_badges_reference_existing_workflows(readme):
+    text = (ROOT / readme).read_text(encoding="utf-8")
+    workflows = set(re.findall(r"actions/workflows/([\w.-]+\.ya?ml)", text))
+
+    assert workflows
+    for name in workflows:
+        assert (ROOT / ".github" / "workflows" / name).is_file(), name
+
+
+@pytest.mark.parametrize("readme", ["README.md", "README.fr.md"])
+def test_quality_scale_badge_matches_the_manifest(readme):
+    manifest = json.loads(
+        (ROOT / "custom_components" / "hydrao_custom" / "manifest.json").read_text()
+    )
+    text = (ROOT / readme).read_text(encoding="utf-8")
+    badge = re.search(r"HA%20Quality%20Scale-(\w+)-", text)
+
+    assert badge
+    assert badge.group(1).lower() == manifest["quality_scale"]
+    target = re.search(r"\]\((custom_components/[^)]*quality_scale\.yaml)\)", text)
+    assert target
+    assert (ROOT / target.group(1)).is_file()
