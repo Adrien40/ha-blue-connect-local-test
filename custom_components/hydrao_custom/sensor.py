@@ -148,10 +148,11 @@ SENSOR_DESCRIPTIONS = [
         translation_key="time_to_comfort",
         device_class=SensorDeviceClass.DURATION,
         native_unit_of_measurement=UnitOfTime.SECONDS,
+        suggested_unit_of_measurement=UnitOfTime.MINUTES,
         entity_category=EntityCategory.DIAGNOSTIC,
         entity_registry_enabled_default=False,
         state_class=SensorStateClass.MEASUREMENT,
-        suggested_display_precision=0,
+        suggested_display_precision=2,
     ),
     SensorEntityDescription(
         key="threshold_1",
