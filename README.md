@@ -110,7 +110,7 @@ Copy the `custom_components/hydrao_custom` folder into the `custom_components` f
 | ⏱️ **Shower Duration** | s (displayed in min) | Raw duration of the current shower. |
 | ⏱️ **Comfort Shower Duration** | s (displayed in min) | Time spent in the comfort zone. |
 | ❄️ **Cold Water Shower Duration** | s (displayed in min) | Time spent below the comfort temperature, for the current shower. Diagnostic sensor, disabled by default. |
-| ⏳ **Time to Comfort Temperature** | s | Time elapsed before the comfort temperature was reached. Unavailable until it is reached, or if the water was already warm when the connection was made. Diagnostic sensor, disabled by default. |
+| ⏳ **Time to Comfort Temperature** | s (displayed in min) | Time elapsed before the comfort temperature was first reached. The value stays fixed once reached, even if the water cools down again later. Unavailable until it is reached, or if the water was already warm when the connection was made. Diagnostic sensor, disabled by default. |
 | 🌡️ **Temperature** | °C | Water temperature measured live. |
 | 🚿 **Shower Volume** | L | Raw volume of the current shower. |
 | 💧 **Comfort Shower Volume** | L | Volume used once the comfort temperature is reached, for the current shower. |

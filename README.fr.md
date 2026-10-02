@@ -110,7 +110,7 @@ Copiez le dossier `custom_components/hydrao_custom` dans le dossier `custom_comp
 | ⏱️ **Durée Douche** | s (affichée en min) | Durée brute de la douche en cours. |
 | ⏱️ **Durée Douche Confort** | s (affichée en min) | Durée passée en zone de confort. |
 | ❄️ **Durée Douche Eau Froide** | s (affichée en min) | Durée passée sous la température de confort, pour la douche en cours. Capteur de diagnostic, désactivé par défaut. |
-| ⏳ **Temps avant Eau Chaude** | s | Temps écoulé avant d'atteindre la température de confort. Indisponible tant qu'elle n'est pas atteinte, ou si l'eau était déjà chaude à la connexion. Capteur de diagnostic, désactivé par défaut. |
+| ⏳ **Temps avant Eau Chaude** | s (affichée en min) | Temps écoulé avant d'atteindre la température de confort pour la première fois. Valeur figée une fois atteinte, même si l'eau refroidit ensuite. Indisponible tant qu'elle n'est pas atteinte, ou si l'eau était déjà chaude à la connexion. Capteur de diagnostic, désactivé par défaut. |
 | 🌡️ **Température** | °C | Température de l'eau mesurée en direct. |
 | 🚿 **Volume Douche** | L | Volume brut de la douche en cours. |
 | 💧 **Volume Douche Confort** | L | Volume utilisé une fois la température de confort atteinte, pour la douche en cours. |
