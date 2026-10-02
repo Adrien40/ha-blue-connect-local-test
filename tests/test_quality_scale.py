@@ -242,3 +242,16 @@ def test_strict_typing_status_matches_the_typing_workflow(rules):
     enforced = "mypy --strict custom_components/hydrao_custom" in workflow
 
     assert (status_of(rules, "strict-typing") == "done") is enforced
+
+
+def test_entity_disabled_by_default_status_matches_the_code(rules):
+    """`done` only while some entity really is disabled by default."""
+    disabled = (
+        any(
+            not description.entity_registry_enabled_default
+            for description in sensor.SENSOR_DESCRIPTIONS
+        )
+        or not sensor.HydraoRealTimeRSSISensor._attr_entity_registry_enabled_default
+    )
+
+    assert (status_of(rules, "entity-disabled-by-default") == "done") is disabled

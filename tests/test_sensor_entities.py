@@ -402,18 +402,33 @@ async def test_rssi_ignores_service_info_without_a_signal_strength(hass, coordin
     assert sensor.native_value is None
 
 
-async def test_rssi_tracks_new_advertisements(hass, integration):
+async def test_rssi_is_disabled_by_default(hass, integration):
+    """Signal strength is a support tool: off until the user asks for it."""
     registry = er.async_get(hass)
     target = registry.async_get_entity_id("sensor", "hydrao_custom", f"{ADDRESS}_rssi")
+
+    assert (
+        registry.async_get(target).disabled_by is er.RegistryEntryDisabler.INTEGRATION
+    )
+    assert hass.states.get(target) is None
+
+
+async def test_rssi_tracks_new_advertisements_once_enabled(hass, integration):
+    registry = er.async_get(hass)
+    target = registry.async_get_entity_id("sensor", "hydrao_custom", f"{ADDRESS}_rssi")
+
+    registry.async_update_entity(target, disabled_by=None)
+    await hass.config_entries.async_reload(integration.entry.entry_id)
+    await hass.async_block_till_done()
 
     # Not connected yet: the passively scanned value is hidden.
     assert hass.states.get(target).state == STATE_UNAVAILABLE
 
-    integration.coordinator.set_bt_status(BT_STATUS_SUCCESS)
+    integration.entry.runtime_data.set_bt_status(BT_STATUS_SUCCESS)
     await hass.async_block_till_done()
     assert hass.states.get(target).state == "-70"
 
-    integration.rssi_callbacks[0](MagicMock(rssi=-55), MagicMock())
+    integration.rssi_callbacks[-1](MagicMock(rssi=-55), MagicMock())
     await hass.async_block_till_done()
     assert hass.states.get(target).state == "-55"
 

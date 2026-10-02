@@ -1,29 +1,57 @@
-# Journal des modifications
-
-## Non publié
-
-- Correction : les capteurs de volume perdu, de volume de douche confort et de
-  volume de douche brut utilisent désormais la classe d'état `total_increasing`
-  au lieu de `measurement`, que Home Assistant refuse pour la classe d'appareil
-  `water` (avertissement au démarrage). Home Assistant peut proposer de
-  corriger les statistiques à long terme de ces trois capteurs dans Outils de
-  développement > Statistiques.
-- Échelle de qualité d'intégration : niveau Platinum déclaré
-  (`quality_scale.yaml`, `manifest.json`). La dernière règle ouverte,
-  `test-coverage`, est remplie : chaque module est couvert à 100 % (lignes et
-  branches) et le workflow de tests échoue désormais sous 95 %.
-- 178 nouveaux tests : cycle de connexion BLE (faux client scripté), écritures
-  de configuration, redémarrage « nouvelle douche », boucle d'arrière-plan,
-  capteurs, bouton, nombre, interrupteur et cycle de vie de l'entrée.
-- `quality_scale.yaml` est aussi vérifié par rapport au seuil de couverture de
-  la CI et à l'étape `mypy --strict`.
+# Hydrao Custom - Journal des modifications
 
 ## 1.1.0
 
-- Nouveaux capteurs : durée de douche à l'eau froide et temps pour atteindre la température de confort.
-- Les durées sont calculées en secondes à partir du compteur de l'appareil (1/50 s), avec gestion correcte du dépassement du compteur 16 bits.
-- Toutes les entités partagent désormais une classe de base commune (`HydraoEntity`).
-- Flux de configuration et d'options : une description pour chaque champ.
-- Échelle de qualité d'intégration : niveau Bronze déclaré (`quality_scale.yaml`).
-- Traductions complétées dans toutes les langues.
-- Nécessite Home Assistant 2026.5.0 ou plus récent.
+🐬🐬🐬🐬🐬🐬🐬🐬🐬🐬
+
+Cette version est consacrée à la précision et à la fiabilité : les durées de douche et la répartition eau froide / confort sont désormais correctes, deux nouveaux capteurs de diagnostic montrent combien de temps l'eau est restée froide, et l'intégration est entièrement testée et typée strictement.
+
+### 🚨 Changements majeurs
+- **Home Assistant 2026.5.0 ou plus récent** (`hacs.json`, auparavant 2025.1.0) : l'intégration s'appuie maintenant sur une fonction Bluetooth livrée pour la première fois dans cette version. Mettez Home Assistant à jour avant l'intégration.
+
+### ✨ Nouveautés
+- Capteur **Durée Douche Eau Froide** : temps passé sous la température de confort pendant la douche en cours. Diagnostic, désactivé par défaut.
+- Capteur **Temps avant Eau Chaude** : temps mis par l'eau pour atteindre la température de confort. Il reste *inconnu* quand l'eau était déjà chaude à la connexion, car la phase froide ne peut alors pas être mesurée. Diagnostic, désactivé par défaut.
+- **Téléchargement des diagnostics** (*Télécharger les diagnostics* sur la page de l'appareil), avec l'adresse Bluetooth, le nom de l'appareil, le titre et l'ID de l'appareil masqués : le fichier peut être joint sans risque à une issue publique.
+- Le capteur **Débit** a maintenant la classe d'appareil *débit volumique*, ce qui permet à Home Assistant de l'afficher dans d'autres unités.
+- Le capteur **Signal Bluetooth** (RSSI) est maintenant désactivé par défaut : c'est un outil d'assistance. Activez-le dans les paramètres de l'entité pour vérifier la portée Bluetooth.
+
+### 🐛 Corrections
+- **Les durées de douche sont maintenant correctes au-delà d'environ 21 minutes.** L'appareil compte le temps par pas de 1/50 s sur 16 bits, donc son compteur repart de zéro toutes les 21,8 minutes ; ce dépassement est maintenant géré, et les durées ne repartent plus de zéro.
+- **La répartition eau froide / confort est plus précise.** Quand la température franchit le seuil de confort entre deux relevés, le volume et le temps sont maintenant partagés au point de passage, au lieu d'être comptés entièrement du côté du dernier relevé.
+- **Durée maximale de savonnage hors limites** (hors de 10–600 s) : il est ramené dans la plage avec un avertissement dans le journal, au lieu d'être envoyé tel quel à l'appareil.
+- Les durées enregistrées avant la mise à jour (en minutes) sont converties à la restauration, donc un redémarrage juste après la mise à jour n'affiche plus des valeurs 60 fois trop petites.
+- Les capteurs de volume perdu, de volume de douche confort et de volume de douche brut utilisent maintenant la classe d'état `total_increasing` au lieu de `measurement`, que Home Assistant refuse pour la classe d'appareil `water` (un avertissement était journalisé à chaque démarrage). Voir les notes de mise à jour.
+
+### 🛡️ Renforcement
+- Une baisse du compteur de durée de l'appareil qui n'est pas un dépassement du compteur est traitée comme une réinitialisation de l'appareil et ne compte pour rien, au lieu de produire une durée énorme et fausse.
+
+### 🧰 Maintenance
+- Toutes les entités partagent maintenant une classe de base commune (`HydraoEntity`) : noms traduits, ID unique construit à partir de l'adresse Bluetooth, appareil. **Les ID d'entités et les ID uniques sont inchangés.**
+- Les icônes sont définies dans `icons.json` (mêmes icônes qu'avant, le statut Bluetooth garde une icône par état).
+- Les durées sont calculées en secondes à partir de différences entières du compteur, et affichées en minutes par Home Assistant.
+- `PARALLEL_UPDATES` est défini sur chaque plateforme.
+- Descriptions de champs (`data_description`) ajoutées aux formulaires d'installation et d'options, traduites dans les 19 langues.
+- Toute l'intégration passe `mypy --strict`, vérifié par un workflow *Typing* dédié.
+- Suite de tests passée de 15 à plus de 400 tests, avec 100 % de couverture (lignes et branches) : appareil Bluetooth simulé, coordinateur, config / options flow, entités, cycle de vie de l'entrée, traductions.
+- CI : workflow pytest + couverture (95 % minimum), workflow *Typing*, et un workflow de publication qui reprend les notes de ce journal (`scripts/release_notes.py`). `.coveragerc` mesure uniquement l'intégration, avec les branches.
+- Le manifest déclare l'échelle de qualité `platinum` (auto-évaluée dans `quality_scale.yaml`, hassfest ne la valide pas pour les intégrations personnalisées), avec des tests qui la gardent cohérente avec le code.
+
+### 📚 Documentation
+- `README.md` / `README.fr.md` : version minimale de Home Assistant, les nouveaux capteurs, et les nouvelles sections *Mise à jour des données*, *Cas d'usage*, *Exemples d'automatisations*, *Limitations connues* et *Suppression de l'intégration*.
+
+### 📋 Notes de mise à jour
+- **Les capteurs de durée gardent leur unité** : Home Assistant les convertit automatiquement, donc une *Durée Douche* existante continue de s'afficher en minutes.
+- **Statistiques de trois capteurs** : *Volume Perdu (Eau Froide)*, *Volume Douche Confort* et *Volume Douche* changent de classe d'état. Home Assistant peut proposer de corriger leurs statistiques à long terme dans **Outils de développement** > **Statistiques** ; acceptez. Pour les statistiques à long terme et le tableau de bord Eau, utilisez les capteurs cumulés (*Volume Douche Cumulé*, *Volume Perdu Cumulé*, *Volume Douche Confort Cumulé*) plutôt que ceux par douche.
+- Le capteur **Signal Bluetooth** n'est désactivé que sur les nouvelles installations : un capteur existant reste activé.
+
+🐬🐬🐬🐬🐬🐬🐬🐬🐬🐬
+
+## 1.0.0
+
+🐬🐬🐬🐬🐬🐬🐬🐬🐬🐬
+
+### ✨ Nouveautés
+- Première version stable.
+
+🐬🐬🐬🐬🐬🐬🐬🐬🐬🐬

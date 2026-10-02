@@ -393,6 +393,8 @@ class HydraoRealTimeRSSISensor(HydraoEntity, SensorEntity):
     _attr_native_unit_of_measurement = "dBm"
     _attr_state_class = SensorStateClass.MEASUREMENT
     _attr_entity_category = EntityCategory.DIAGNOSTIC
+    # Signal strength is a support tool, not something to show by default.
+    _attr_entity_registry_enabled_default = False
     _attr_translation_key = "rssi"
     _attr_should_poll = False
 

@@ -118,7 +118,7 @@ Copy the `custom_components/hydrao_custom` folder into the `custom_components` f
 | 🧴 **Maximum Soaping Time** | s | Maximum soaping time currently configured, as read from the device. |
 | 🔵 **Bluetooth Status** | Status | Water Off / Connecting / Connected / Error / Sending Configuration / Configuration Applied / Failed / Restarting Device. |
 | 🟢🔵🩷🔴 **Threshold 1 to 4** | L | The 4 liter tiers configured on the device, with their color as an attribute. |
-| 📶 **Bluetooth Signal** | dBm | Real-time received Bluetooth signal strength. |
+| 📶 **Bluetooth Signal** | dBm | Real-time received Bluetooth signal strength. Diagnostic sensor, disabled by default: enable it from the entity settings to check the Bluetooth range. |
 
 ℹ️ *The device's Firmware, Hardware, and Unique Identifier are exposed by Home Assistant at the device level*
 

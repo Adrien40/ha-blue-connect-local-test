@@ -219,13 +219,13 @@ rules:
       Every measured sensor has a device class; flow_rate uses
       SensorDeviceClass.VOLUME_FLOW_RATE (liters per minute).
   entity-disabled-by-default:
-    status: exempt
+    status: done
     comment: >-
-      Deliberate choice of the maintainer: the Bluetooth signal (RSSI) sensor
-      stays enabled by default, because signal quality is the first thing to
-      check when the device cannot be reached. The two sensors that are only
-      useful for fine analysis (cold-water duration, time to comfort) are
-      already disabled by default.
+      The entities that are only useful for support or fine analysis are
+      disabled by default: the Bluetooth signal (RSSI) sensor, the cold-water
+      duration and the time to comfort. Users can enable them from the entity
+      settings. This only applies to new installations: an entity that is
+      already registered keeps its current state.
   entity-translations:
     status: done
     comment: All entities use translation_key and has_entity_name.
