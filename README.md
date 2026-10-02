@@ -199,16 +199,6 @@ actions:
       entity_id: button.hydrao_eeff_shower_ended
 ```
 
-**Lower the comfort temperature at night**
-```yaml
-actions:
-  - action: number.set_value
-    target:
-      entity_id: number.hydrao_eeff_minimum_comfort_temperature
-    data:
-      value: 34
-```
-
 ---
 
 ### ⚠️ Known Limitations
