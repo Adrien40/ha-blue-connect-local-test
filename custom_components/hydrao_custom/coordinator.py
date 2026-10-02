@@ -54,13 +54,17 @@ from .const import (
     DEFAULT_SOAPING_DURATION,
     DOMAIN,
     DURATION_TICKS_PER_SECOND,
+    ISSUE_TRACKER_URL,
     MAX_NEW_SHOWER_ATTEMPTS,
+    MAX_WATER_TEMP,
+    MIN_WATER_TEMP,
     HydraoConfigEntry,
 )
 from .util import (
     clamp_soaping_duration,
     comfort_fraction,
     duration_ticks_delta,
+    is_plausible_water_temp,
     thresholds_strictly_increasing,
 )
 
@@ -229,6 +233,12 @@ class HydraoDataUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
         # Temperature of the previous reading in the current session, used
         # to split an interval that straddles the comfort threshold.
         self._last_temp_raw: float | None = None
+
+        # The last frames received from the device, as hex, kept for the
+        # diagnostics file: they are what lets us tell how a device revision
+        # encodes its values when the decoded figures look wrong.
+        self.last_raw_frames: dict[str, str | None] = {}
+        self._implausible_temperature_warned = False
 
         self._thresholds_read_for_session = False
         self._thresholds_need_reread = False
@@ -886,6 +896,8 @@ class HydraoDataUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
         temp_data: bytearray,
         flow_raw_data: bytearray | None,
     ) -> None:
+        self._record_raw_frames(vol_data, dur_data, temp_data, flow_raw_data)
+
         if len(vol_data) < 4 or len(dur_data) < 2 or len(temp_data) < 2:
             _LOGGER.debug(
                 "Ignoring malformed BLE frame (vol=%d, dur=%d, temp=%d bytes)",
@@ -898,7 +910,15 @@ class HydraoDataUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
         total_raw = (vol_data[1] << 8) | vol_data[0]
         shower_raw = float((vol_data[3] << 8) | vol_data[2])
         duration_ticks = self._duration_raw_ticks(dur_data)
-        temp_raw = ((temp_data[1] << 8) | temp_data[0]) / 2.0
+        decoded_temp = ((temp_data[1] << 8) | temp_data[0]) / 2.0
+        # None when the reading cannot be a real water temperature: it is
+        # then left out of every cold / comfort computation instead of being
+        # counted as (very) hot water.
+        temperature: float | None = None
+        if is_plausible_water_temp(decoded_temp):
+            temperature = decoded_temp
+        else:
+            self._warn_implausible_temperature(decoded_temp)
 
         # time.monotonic(), not time.time(): last_seen_time is only ever
         # diffed against another later reading of this same clock (see
@@ -955,41 +975,47 @@ class HydraoDataUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
         delta_vol = max(0.0, delta_vol)
         delta_dur = max(0, delta_ticks) / DURATION_TICKS_PER_SECOND
 
-        # Split the interval between comfort and cold according to how the
-        # temperature evolved since the previous reading, instead of
-        # attributing everything to the current reading's temperature.
         previous_temp = self._last_temp_raw
-        comfort_share = comfort_fraction(
-            previous_temp, temp_raw, self.min_temp_threshold
-        )
-
-        comfort_vol = delta_vol * comfort_share
-        cold_vol = delta_vol - comfort_vol
-        comfort_dur = delta_dur * comfort_share
-        cold_dur = delta_dur - comfort_dur
-
-        self.session_wasted_volume += cold_vol
-        self.lifetime_wasted_volume_total += cold_vol
-        self.session_shower_duration_cold += cold_dur
-        self.session_shower_volume_comfort += comfort_vol
-        self.lifetime_shower_volume_comfort_total += comfort_vol
-        self.session_shower_duration_comfort += comfort_dur
         self.session_duration_total += delta_dur
 
-        if comfort_share > 0.0 and not self._session_comfort_seen:
-            self._session_comfort_seen = True
-            # Only report a time-to-comfort when we actually watched the
-            # water go from cold to comfortable. If the session's very
-            # first reading was already warm, the cold phase (if any)
-            # happened before we connected and cannot be measured.
-            if previous_temp is not None and previous_temp < self.min_temp_threshold:
-                self.session_time_to_comfort = self.session_shower_duration_cold
+        if temperature is not None:
+            # Split the interval between comfort and cold according to how
+            # the temperature evolved since the previous reading, instead of
+            # attributing everything to the current reading's temperature.
+            comfort_share = comfort_fraction(
+                previous_temp, temperature, self.min_temp_threshold
+            )
+
+            comfort_vol = delta_vol * comfort_share
+            cold_vol = delta_vol - comfort_vol
+            comfort_dur = delta_dur * comfort_share
+            cold_dur = delta_dur - comfort_dur
+
+            self.session_wasted_volume += cold_vol
+            self.lifetime_wasted_volume_total += cold_vol
+            self.session_shower_duration_cold += cold_dur
+            self.session_shower_volume_comfort += comfort_vol
+            self.lifetime_shower_volume_comfort_total += comfort_vol
+            self.session_shower_duration_comfort += comfort_dur
+
+            if comfort_share > 0.0 and not self._session_comfort_seen:
+                self._session_comfort_seen = True
+                # Only report a time-to-comfort when we actually watched the
+                # water go from cold to comfortable. If the session's very
+                # first reading was already warm, the cold phase (if any)
+                # happened before we connected and cannot be measured.
+                if (
+                    previous_temp is not None
+                    and previous_temp < self.min_temp_threshold
+                ):
+                    self.session_time_to_comfort = self.session_shower_duration_cold
 
         if (
             self.auto_sync_at_comfort
             and not self._comfort_sync_sent_for_session
             and shower_raw > 0
-            and temp_raw >= self.min_temp_threshold
+            and temperature is not None
+            and temperature >= self.min_temp_threshold
         ):
             self._comfort_sync_sent_for_session = True
 
@@ -1011,7 +1037,9 @@ class HydraoDataUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
 
         self._last_shower_raw = shower_raw
         self._last_duration_ticks = duration_ticks
-        self._last_temp_raw = temp_raw
+        # A reading that was left out must not serve as the starting point of
+        # the next interval.
+        self._last_temp_raw = temperature
         self.last_seen_time = current_time
 
         new_data = {
@@ -1020,7 +1048,7 @@ class HydraoDataUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
             "device_id": self.static_data.get("device_id", "unknown"),
             "temperature": 0.0
             if self._awaiting_manual_reset_confirmation
-            else temp_raw,
+            else temperature,
             "total_volume": float(total_raw),
             "flow_rate": 0.0 if self._awaiting_manual_reset_confirmation else flow_rate,
             "wasted_volume": self.session_wasted_volume,
@@ -1046,6 +1074,44 @@ class HydraoDataUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
 
         self.last_valid_data = new_data
         self.async_set_updated_data(self.last_valid_data)
+
+    def _record_raw_frames(
+        self,
+        vol_data: bytearray,
+        dur_data: bytearray,
+        temp_data: bytearray,
+        flow_raw_data: bytearray | None,
+    ) -> None:
+        """Keep the frames as received, and log them whenever they change."""
+        frames: dict[str, str | None] = {
+            "volume": vol_data.hex(),
+            "duration": dur_data.hex(),
+            "temperature": temp_data.hex(),
+            "flow": flow_raw_data.hex() if flow_raw_data is not None else None,
+        }
+        if frames != self.last_raw_frames:
+            _LOGGER.debug("Raw BLE frames: %s", frames)
+        self.last_raw_frames = frames
+
+    def _warn_implausible_temperature(self, temperature: float) -> None:
+        """Say once, with what is needed to fix it, that the temperature
+        cannot be decoded for this device."""
+        if self._implausible_temperature_warned:
+            return
+        self._implausible_temperature_warned = True
+        _LOGGER.warning(
+            "Ignoring a water temperature of %.1f °C (raw frame %s): it is "
+            "outside the %.0f-%.0f °C range. This device (firmware %s, "
+            "hardware %s) may encode the temperature differently. Please "
+            "report it, with the diagnostics file, at %s",
+            temperature,
+            self.last_raw_frames.get("temperature"),
+            MIN_WATER_TEMP,
+            MAX_WATER_TEMP,
+            self.static_data.get("firmware", "unknown"),
+            self.static_data.get("hardware", "unknown"),
+            ISSUE_TRACKER_URL,
+        )
 
     def _reset_session_state(self, preserve_wasted: bool = False) -> None:
         """Zero the per-session accumulators.

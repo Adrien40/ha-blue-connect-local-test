@@ -48,6 +48,14 @@ DURATION_WRAP_WINDOW_TICKS = 10 * DURATION_TICKS_PER_SECOND
 
 DEFAULT_MIN_TEMP_THRESHOLD = 33.0
 
+# Water temperatures outside this range cannot be real: a reading beyond it
+# means the value was decoded with the wrong resolution (some device
+# revisions may encode it differently) or the device sent a filler value.
+MIN_WATER_TEMP = 0.0
+MAX_WATER_TEMP = 100.0
+
+ISSUE_TRACKER_URL = "https://github.com/Adrien40/ha-hydrao-custom/issues"
+
 MAX_NEW_SHOWER_ATTEMPTS = 2
 
 BT_STATUS_WAITING = "waiting"

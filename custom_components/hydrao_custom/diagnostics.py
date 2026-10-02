@@ -45,6 +45,7 @@ async def async_get_config_entry_diagnostics(
                 "min_temp_threshold": coordinator.min_temp_threshold,
                 "auto_sync_at_comfort": coordinator.auto_sync_at_comfort,
                 "seconds_since_last_seen": seen_ago,
+                "raw_frames": coordinator.last_raw_frames,
                 "static_data": coordinator.static_data,
                 "data": coordinator.data,
                 "pending": {

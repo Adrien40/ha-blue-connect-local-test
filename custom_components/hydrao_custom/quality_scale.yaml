@@ -171,9 +171,9 @@ rules:
     status: done
     comment: >-
       diagnostics.py returns the entry data and options plus the coordinator
-      state (Bluetooth status, pending writes, last data). The Bluetooth
-      address, name and device id are redacted; tests/test_diagnostics.py
-      checks that none of them leaks.
+      state (Bluetooth status, pending writes, last data and the last raw
+      Bluetooth frames). The Bluetooth address, name and device id are
+      redacted; tests/test_diagnostics.py checks that none of them leaks.
   discovery-update-info:
     status: exempt
     comment: >-

@@ -7,7 +7,9 @@ from .const import (
     DURATION_TICKS_WRAP,
     DURATION_WRAP_WINDOW_TICKS,
     MAX_SOAPING_DURATION,
+    MAX_WATER_TEMP,
     MIN_SOAPING_DURATION,
+    MIN_WATER_TEMP,
 )
 
 
@@ -38,6 +40,11 @@ def pairwise_increasing_errors(
 def is_valid_temp(temp: float) -> bool:
     """Check if the temperature is within the valid 0-50 C range."""
     return 0 <= temp <= 50
+
+
+def is_plausible_water_temp(temp: float) -> bool:
+    """Check if a decoded temperature reading can be a real water temperature."""
+    return MIN_WATER_TEMP <= temp <= MAX_WATER_TEMP
 
 
 def clamp_soaping_duration(value: int) -> int:

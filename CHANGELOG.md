@@ -9,7 +9,7 @@ This release is about accuracy and reliability: shower durations and the cold / 
 ### ✨ New features
 - **Cold Water Shower Duration** sensor: time spent below the comfort temperature during the current shower. Diagnostic, disabled by default.
 - **Time to Comfort Temperature** sensor: how long the water took to reach the comfort temperature. It stays *unknown* when the water was already warm at connection, because the cold phase cannot be measured then. Diagnostic, disabled by default.
-- **Diagnostics download** (*Download diagnostics* on the device page), with the Bluetooth address, device name, title and device ID redacted so the file can be attached to a public issue.
+- **Diagnostics download** (*Download diagnostics* on the device page), with the Bluetooth address, device name, title and device ID redacted so the file can be attached to a public issue. It includes the last raw Bluetooth frames, which makes it possible to work out how a device revision encodes its values.
 - The **Flow Rate** sensor now has the *volume flow rate* device class, so Home Assistant can show it in other units.
 - The **Bluetooth Signal** (RSSI) sensor is now disabled by default: it is a support tool. Enable it from the entity settings to check the Bluetooth range.
 
@@ -22,6 +22,7 @@ This release is about accuracy and reliability: shower durations and the cold / 
 - The wasted volume, comfort shower volume and raw shower volume sensors now use the `total_increasing` state class instead of `measurement`, which Home Assistant rejects for the `water` device class (a warning was logged at every startup). See the upgrade notes.
 
 ### 🛡️ Hardening
+- **A water temperature outside 0–100 °C is no longer used.** Some Hydrao revisions may encode the temperature differently, which could show hundreds of degrees and count all the water as comfortable. The *Temperature* sensor now shows *unknown*, the comfort / cold figures and the Comfort Mode Sync ignore that reading, volume, duration and flow keep working, and a single warning in the log gives the firmware, the hardware and the raw frame to report.
 - A drop of the device's duration counter that is not a wrap-around is treated as a device reset and counts for nothing, instead of producing a huge wrong duration.
 
 ### 🧰 Maintenance

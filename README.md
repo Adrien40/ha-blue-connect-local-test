@@ -236,6 +236,7 @@ actions:
 <summary>⚠️ See common issues</summary>
 
 * **"Water Off" permanently**: Normal — the Hydrao only communicates over Bluetooth while water is running.
+* **Temperature shown as *Unknown* (and a warning in the log)**: the device sent a temperature that cannot be real (outside 0–100 °C), so the integration ignores it instead of counting it as hot water. Some Hydrao revisions may encode their values differently. Please [open an issue](https://github.com/Adrien40/ha-hydrao-custom/issues) and attach the diagnostics file (**Settings** > **Devices & Services** > **Hydrao Custom** > ⋮ > **Download diagnostics**): it contains the raw Bluetooth frames, the firmware and the hardware revision, which is what is needed to fix the decoding.
 * **"Connection Error"**: Unlike "Water Off", this status means the device was detected in range, but the connection or read still failed (signal too weak or unstable, dropped mid-shower). Move your antenna closer, or [install an ESPHome Bluetooth Proxy](https://esphome.github.io/bluetooth-proxies/) near the shower.
 * **"Configuration Failed"**: Writing the new settings to the device failed after several attempts. No need to worry: the change isn't lost (visible in **Pending Configuration**), it will be automatically retried at the next shower.
 * **Thresholds/Colors greyed out in options**: They can only be read/edited after a successful first connection — run the water once before adjusting them.

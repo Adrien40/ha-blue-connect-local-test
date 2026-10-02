@@ -275,8 +275,11 @@ class HydraoSensor(HydraoEntity, RestoreSensor):
 
     _RAW_KEYS: ClassVar[set[str]] = {"shower_volume_raw", "shower_duration"}
     # Keys for which None coming from the coordinator is a real answer
-    # ("not reached / unknown"), not a missing value to be restored.
-    _NULLABLE_KEYS: ClassVar[frozenset[str]] = frozenset({"time_to_comfort"})
+    # ("not reached / unknown", or a temperature that could not be decoded),
+    # not a missing value to be restored.
+    _NULLABLE_KEYS: ClassVar[frozenset[str]] = frozenset(
+        {"time_to_comfort", "temperature"}
+    )
     _NUMERIC_KEYS = frozenset(
         {
             "total_volume",

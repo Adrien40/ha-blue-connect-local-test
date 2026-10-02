@@ -9,7 +9,7 @@ Cette version est consacrée à la précision et à la fiabilité : les durées 
 ### ✨ Nouveautés
 - Capteur **Durée Douche Eau Froide** : temps passé sous la température de confort pendant la douche en cours. Diagnostic, désactivé par défaut.
 - Capteur **Temps avant Eau Chaude** : temps mis par l'eau pour atteindre la température de confort. Il reste *inconnu* quand l'eau était déjà chaude à la connexion, car la phase froide ne peut alors pas être mesurée. Diagnostic, désactivé par défaut.
-- **Téléchargement des diagnostics** (*Télécharger les diagnostics* sur la page de l'appareil), avec l'adresse Bluetooth, le nom de l'appareil, le titre et l'ID de l'appareil masqués : le fichier peut être joint sans risque à une issue publique.
+- **Téléchargement des diagnostics** (*Télécharger les diagnostics* sur la page de l'appareil), avec l'adresse Bluetooth, le nom de l'appareil, le titre et l'ID de l'appareil masqués : le fichier peut être joint sans risque à une issue publique. Il contient les dernières trames Bluetooth brutes, ce qui permet de comprendre comment une révision de l'appareil encode ses valeurs.
 - Le capteur **Débit** a maintenant la classe d'appareil *débit volumique*, ce qui permet à Home Assistant de l'afficher dans d'autres unités.
 - Le capteur **Signal Bluetooth** (RSSI) est maintenant désactivé par défaut : c'est un outil d'assistance. Activez-le dans les paramètres de l'entité pour vérifier la portée Bluetooth.
 
@@ -22,6 +22,7 @@ Cette version est consacrée à la précision et à la fiabilité : les durées 
 - Les capteurs de volume perdu, de volume de douche confort et de volume de douche brut utilisent maintenant la classe d'état `total_increasing` au lieu de `measurement`, que Home Assistant refuse pour la classe d'appareil `water` (un avertissement était journalisé à chaque démarrage). Voir les notes de mise à jour.
 
 ### 🛡️ Renforcement
+- **Une température de l'eau hors de 0–100 °C n'est plus utilisée.** Certaines révisions de l'Hydrao encodent peut-être la température autrement, ce qui pouvait afficher des centaines de degrés et compter toute l'eau comme confortable. Le capteur *Température* affiche maintenant *inconnu*, les chiffres confort / froid et la synchro du mode confort ignorent ce relevé, le volume, la durée et le débit continuent de fonctionner, et un seul avertissement dans le journal donne le firmware, le matériel et la trame brute à signaler.
 - Une baisse du compteur de durée de l'appareil qui n'est pas un dépassement du compteur est traitée comme une réinitialisation de l'appareil et ne compte pour rien, au lieu de produire une durée énorme et fausse.
 
 ### 🧰 Maintenance
