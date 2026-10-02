@@ -182,18 +182,14 @@ rules:
       manifest.json declares a bluetooth matcher (local_name HYDRAO*) and the
       config flow implements async_step_bluetooth.
   docs-data-update:
-    status: todo
-    comment: >-
-      The README says the device only talks while water runs, but does not
-      describe how and when data is read and refreshed.
+    status: done
+    comment: README section "How Data Is Updated".
   docs-examples:
-    status: todo
-    comment: The README has no automation examples.
+    status: done
+    comment: README section "Automation Examples".
   docs-known-limitations:
-    status: todo
-    comment: >-
-      Limitations (water must run to read or write settings) are scattered
-      through the README; there is no dedicated section.
+    status: done
+    comment: README section "Known Limitations".
   docs-supported-devices:
     status: done
     comment: README section "Compatibility / Requirements" (HYDRAO* models, tested on Aloe).
@@ -204,8 +200,8 @@ rules:
     status: done
     comment: README section "Troubleshooting".
   docs-use-cases:
-    status: todo
-    comment: The README does not describe concrete use cases.
+    status: done
+    comment: README section "Use Cases".
   dynamic-devices:
     status: exempt
     comment: Each config entry is exactly one device; none appear later.
@@ -220,11 +216,13 @@ rules:
       Every measured sensor has a device class; flow_rate uses
       SensorDeviceClass.VOLUME_FLOW_RATE (liters per minute).
   entity-disabled-by-default:
-    status: todo
+    status: exempt
     comment: >-
-      The cold-duration and time-to-comfort sensors are disabled by default.
-      The RSSI sensor is not, although it writes its state on every Bluetooth
-      advertisement.
+      Deliberate choice of the maintainer: the Bluetooth signal (RSSI) sensor
+      stays enabled by default, because signal quality is the first thing to
+      check when the device cannot be reached. The two sensors that are only
+      useful for fine analysis (cold-water duration, time to comfort) are
+      already disabled by default.
   entity-translations:
     status: done
     comment: All entities use translation_key and has_entity_name.
