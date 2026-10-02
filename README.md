@@ -139,6 +139,79 @@ Once the device is added, click **Configure** ⚙️ to:
 
 ---
 
+### 🔄 How Data Is Updated
+The integration does **not poll** the device. It listens passively for the Hydrao's Bluetooth advertisements, which only appear **while water is running**:
+
+* **Water starts:** Home Assistant sees the device, the integration connects and reads volume, duration, temperature and flow continuously for as long as the connection lasts. Entities are updated on every read, and **Bluetooth Status** shows *Connected (Shower in progress)*.
+* **Water stops:** the connection ends. **Flow Rate** drops to 0, **Bluetooth Status** returns to *Water Off*, and the other sensors keep the values of the last shower.
+* **New shower:** counters restart once the device has been silent for longer than the **Maximum Soaping Time**, when you press **Shower Ended**, or when **Comfort Mode Sync** resets them.
+* **Settings you change** (thresholds, colors, soaping time) are queued and written at the next connection, so they show in **Pending Configuration** until the next shower.
+* The **Bluetooth Signal** sensor updates on every advertisement received.
+
+---
+
+### 🎯 Use Cases
+* **Cut wasted water:** see, shower after shower, how many liters of cold water run before the right temperature, and track the trend with the cumulative sensors.
+* **Meaningful liter thresholds:** with **Comfort Mode Sync**, the colored tiers on the device only count water that was actually comfortable.
+* **Shower presence:** use **Bluetooth Status** (*Connected*) as a "shower in progress" signal for the fan, the lights or the heating.
+* **Voice or automation control:** end a shower or change the comfort temperature from a script, a dashboard, or a voice assistant.
+
+---
+
+### 🤖 Automation Examples
+Replace the entity IDs below with yours (they start with your device's name, for example `sensor.hydrao_eeff_...`).
+
+**Notify when a shower wasted too much cold water**
+```yaml
+automation:
+  - alias: "Shower: wasted water report"
+    triggers:
+      - trigger: state
+        entity_id: sensor.hydrao_eeff_bluetooth_status
+        from: "success"
+        to: "waiting"
+    conditions:
+      - condition: numeric_state
+        entity_id: sensor.hydrao_eeff_wasted_volume_cold_water
+        above: 5
+    actions:
+      - action: notify.notify
+        data:
+          message: >-
+            {{ states('sensor.hydrao_eeff_wasted_volume_cold_water') }} L of
+            cold water wasted during this shower.
+```
+
+**End the shower from an automation**
+```yaml
+actions:
+  - action: button.press
+    target:
+      entity_id: button.hydrao_eeff_shower_ended
+```
+
+**Lower the comfort temperature at night**
+```yaml
+actions:
+  - action: number.set_value
+    target:
+      entity_id: number.hydrao_eeff_minimum_comfort_temperature
+    data:
+      value: 34
+```
+
+---
+
+### ⚠️ Known Limitations
+* **Water must be running** for the device to be reachable: nothing can be read or written otherwise. Settings changed while the water is off are delivered at the next shower.
+* **Thresholds and colors** can only be edited after a first successful connection.
+* The **Minimum Comfort Temperature** lives in Home Assistant only and is never sent to the Hydrao.
+* **Time to Comfort Temperature** stays unavailable if the water was already warm when the connection was made.
+* Only the **Hydrao Aloé (HYDRA_SHOWER)**, hardware version 9, has been tested. Other Hydrao models are expected to work but are not validated.
+* Reliability depends on Bluetooth range: a weak signal can cause *Connection Error*; an [ESPHome Bluetooth Proxy](https://esphome.github.io/bluetooth-proxies/) near the shower helps.
+
+---
+
 ### 🗑️ Removal
 1. Go to **Settings** > **Devices & Services** and open **Hydrao Custom**.
 2. Click the ⋮ menu next to your device and choose **Delete**. Home Assistant removes the device and its entities.

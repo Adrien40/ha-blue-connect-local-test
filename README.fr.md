@@ -139,6 +139,79 @@ Une fois l'appareil ajouté, cliquez sur **Configurer** ⚙️ pour :
 
 ---
 
+### 🔄 Mise à jour des données
+L'intégration ne **fait pas de polling** : elle écoute passivement les annonces Bluetooth du Hydrao, qui n'apparaissent **que lorsque l'eau coule** :
+
+* **L'eau démarre :** Home Assistant voit l'appareil, l'intégration se connecte et lit volume, durée, température et débit en continu tant que la connexion dure. Les entités sont mises à jour à chaque lecture, et **État Bluetooth** affiche *✅ Connecté (Douche en cours)*.
+* **L'eau s'arrête :** la connexion se termine. Le **Débit** retombe à 0, l'**État Bluetooth** repasse à *🚰 Eau coupée*, et les autres capteurs conservent les valeurs de la dernière douche.
+* **Nouvelle douche :** les compteurs repartent quand l'appareil est resté silencieux plus longtemps que la **Durée maximale de savonnage**, quand vous appuyez sur **Douche Terminée**, ou quand la **Synchro Mode Confort** les réinitialise.
+* **Les réglages modifiés** (seuils, couleurs, temps de savonnage) sont mis en file d'attente et écrits à la prochaine connexion : ils apparaissent dans **Configuration en attente** jusqu'à la douche suivante.
+* Le capteur **Signal Bluetooth** se met à jour à chaque annonce reçue.
+
+---
+
+### 🎯 Cas d'usage
+* **Réduire l'eau gaspillée :** voir, douche après douche, combien de litres d'eau froide coulent avant d'atteindre la bonne température, et suivre la tendance avec les capteurs cumulés.
+* **Des seuils en litres qui ont du sens :** avec le **Synchro Mode Confort**, les paliers de couleur de l'appareil ne comptent que l'eau réellement confortable.
+* **Présence sous la douche :** utiliser le **État Bluetooth** (*Connecté*) comme signal « douche en cours » pour la ventilation, l'éclairage ou le chauffage.
+* **Pilotage vocal ou automatisé :** terminer une douche ou changer la température de confort depuis un script, un tableau de bord ou un assistant vocal.
+
+---
+
+### 🤖 Exemples d'automatisations
+Remplacez les identifiants d'entités ci-dessous par les vôtres (ils commencent par le nom de votre appareil, par exemple `sensor.hydrao_eeff_...`).
+
+**Être prévenu quand une douche a gaspillé trop d'eau froide**
+```yaml
+automation:
+  - alias: "Douche : bilan de l'eau gaspillée"
+    triggers:
+      - trigger: state
+        entity_id: sensor.hydrao_eeff_etat_bluetooth
+        from: "success"
+        to: "waiting"
+    conditions:
+      - condition: numeric_state
+        entity_id: sensor.hydrao_eeff_volume_perdu_eau_froide
+        above: 5
+    actions:
+      - action: notify.notify
+        data:
+          message: >-
+            {{ states('sensor.hydrao_eeff_volume_perdu_eau_froide') }} L d'eau
+            froide gaspillés pendant cette douche.
+```
+
+**Terminer la douche depuis une automatisation**
+```yaml
+actions:
+  - action: button.press
+    target:
+      entity_id: button.hydrao_eeff_douche_terminee
+```
+
+**Baisser la température de confort la nuit**
+```yaml
+actions:
+  - action: number.set_value
+    target:
+      entity_id: number.hydrao_eeff_temperature_de_confort_minimum
+    data:
+      value: 34
+```
+
+---
+
+### ⚠️ Limitations connues
+* **L'eau doit couler** pour que l'appareil soit joignable : rien ne peut être lu ni écrit autrement. Les réglages modifiés eau coupée sont transmis à la douche suivante.
+* **Les seuils et les couleurs** ne sont modifiables qu'après une première connexion réussie.
+* La **Température de confort minimum** n'existe que dans Home Assistant et n'est jamais envoyée au Hydrao.
+* Le **Temps avant Eau Chaude** reste indisponible si l'eau était déjà chaude à la connexion.
+* Seul le **Hydrao Aloé (HYDRA_SHOWER)**, version matérielle 9, a été testé. Les autres modèles Hydrao devraient fonctionner mais ne sont pas validés.
+* La fiabilité dépend de la portée Bluetooth : un signal faible peut provoquer une *Erreur de connexion* ; un [proxy Bluetooth ESPHome](https://esphome.github.io/bluetooth-proxies/) près de la douche aide.
+
+---
+
 ### 🗑️ Suppression de l'intégration
 1. Allez dans **Paramètres** > **Appareils et services** et ouvrez **Hydrao Custom**.
 2. Cliquez sur le menu ⋮ à côté de votre appareil et choisissez **Supprimer**. Home Assistant supprime l'appareil et ses entités.
