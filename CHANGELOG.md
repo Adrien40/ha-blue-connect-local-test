@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+- Fix: the wasted volume, comfort shower volume and raw shower volume sensors
+  now use the `total_increasing` state class instead of `measurement`, which
+  Home Assistant rejects for the `water` device class (warning at startup).
+  Home Assistant may offer to fix the long-term statistics of these three
+  sensors in Developer tools > Statistics.
 - Integration Quality Scale: Platinum declared (`quality_scale.yaml`,
   `manifest.json`). The last open rule, `test-coverage`, is met: every module
   is covered at 100% (lines and branches) and the Tests workflow now fails

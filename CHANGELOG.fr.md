@@ -2,6 +2,12 @@
 
 ## Non publié
 
+- Correction : les capteurs de volume perdu, de volume de douche confort et de
+  volume de douche brut utilisent désormais la classe d'état `total_increasing`
+  au lieu de `measurement`, que Home Assistant refuse pour la classe d'appareil
+  `water` (avertissement au démarrage). Home Assistant peut proposer de
+  corriger les statistiques à long terme de ces trois capteurs dans Outils de
+  développement > Statistiques.
 - Échelle de qualité d'intégration : niveau Platinum déclaré
   (`quality_scale.yaml`, `manifest.json`). La dernière règle ouverte,
   `test-coverage`, est remplie : chaque module est couvert à 100 % (lignes et

@@ -89,3 +89,15 @@ async def test_every_entity_uses_the_translated_entity_name(entities):
 async def test_every_entity_belongs_to_the_device(entities):
     for entity in entities:
         assert entity.device_info["identifiers"] == {(DOMAIN, ADDRESS)}
+
+
+def test_every_state_class_is_allowed_for_its_device_class():
+    """Home Assistant logs a warning at startup, and may drop long-term
+    statistics, when a sensor's state class is impossible for its device
+    class (e.g. `measurement` with `water`)."""
+    from homeassistant.components.sensor.const import DEVICE_CLASS_STATE_CLASSES
+
+    for desc in SENSOR_DESCRIPTIONS:
+        allowed = DEVICE_CLASS_STATE_CLASSES.get(desc.device_class)
+        if desc.state_class is not None and allowed:
+            assert desc.state_class in allowed, desc.key

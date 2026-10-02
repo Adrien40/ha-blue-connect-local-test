@@ -79,7 +79,7 @@ SENSOR_DESCRIPTIONS = [
         translation_key="wasted_volume",
         device_class=SensorDeviceClass.WATER,
         native_unit_of_measurement=UnitOfVolume.LITERS,
-        state_class=SensorStateClass.MEASUREMENT,
+        state_class=SensorStateClass.TOTAL_INCREASING,
         suggested_display_precision=0,
     ),
     SensorEntityDescription(
@@ -95,7 +95,7 @@ SENSOR_DESCRIPTIONS = [
         translation_key="shower_volume_comfort",
         device_class=SensorDeviceClass.WATER,
         native_unit_of_measurement=UnitOfVolume.LITERS,
-        state_class=SensorStateClass.MEASUREMENT,
+        state_class=SensorStateClass.TOTAL_INCREASING,
         suggested_display_precision=0,
     ),
     SensorEntityDescription(
@@ -111,7 +111,7 @@ SENSOR_DESCRIPTIONS = [
         translation_key="shower_volume_raw",
         device_class=SensorDeviceClass.WATER,
         native_unit_of_measurement=UnitOfVolume.LITERS,
-        state_class=SensorStateClass.MEASUREMENT,
+        state_class=SensorStateClass.TOTAL_INCREASING,
         suggested_display_precision=0,
     ),
     SensorEntityDescription(
