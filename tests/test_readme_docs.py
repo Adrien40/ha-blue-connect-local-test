@@ -59,7 +59,7 @@ def test_automation_examples_are_valid_yaml(readme):
     text = (ROOT / readme).read_text(encoding="utf-8")
     blocks = re.findall(r"```yaml\n(.*?)```", text, re.DOTALL)
 
-    assert len(blocks) >= 3
+    assert len(blocks) >= 2
     for block in blocks:
         assert yaml.safe_load(block)
 

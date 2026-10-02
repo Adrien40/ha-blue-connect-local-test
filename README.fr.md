@@ -162,7 +162,7 @@ L'intégration ne **fait pas de polling** : elle écoute passivement les annonce
 ### 🎯 Cas d'usage
 * **Réduire l'eau gaspillée :** voir, douche après douche, combien de litres d'eau froide coulent avant d'atteindre la bonne température, et suivre la tendance avec les capteurs cumulés.
 * **Des seuils en litres qui ont du sens :** avec le **Synchro Mode Confort**, les paliers de couleur de l'appareil ne comptent que l'eau réellement confortable.
-* **Présence sous la douche :** utiliser le **État Bluetooth** (*Connecté*) comme signal « douche en cours » pour la ventilation, l'éclairage ou le chauffage.
+* **Présence sous la douche :** utiliser l'**État Bluetooth** (*Connecté*) comme signal « douche en cours » pour la ventilation, l'éclairage ou le chauffage.
 * **Pilotage vocal ou automatisé :** terminer une douche ou changer la température de confort depuis un script, un tableau de bord ou un assistant vocal.
 
 ---
