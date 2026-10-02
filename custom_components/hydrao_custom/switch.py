@@ -1,6 +1,8 @@
 # Copyright (c) 2026 Adrien40
 # SPDX-License-Identifier: GPL-3.0-only
 
+from typing import Any
+
 from homeassistant.components.switch import SwitchEntity, SwitchEntityDescription
 from homeassistant.const import EntityCategory
 from homeassistant.core import HomeAssistant, callback
@@ -11,11 +13,13 @@ from .coordinator import HydraoDataUpdateCoordinator
 from .entity import HydraoEntity
 from .entity_helpers import apply_and_persist
 
+# Writes are queued locally and sent on the next BLE connection.
+PARALLEL_UPDATES = 1
+
 AUTO_SYNC_DESC = SwitchEntityDescription(
     key="auto_sync_at_comfort",
     translation_key="auto_sync_at_comfort",
     entity_category=EntityCategory.CONFIG,
-    icon="mdi:sync",
 )
 
 
@@ -41,12 +45,12 @@ class HydraoAutoSyncSwitch(HydraoEntity, SwitchEntity):
 
     async def async_added_to_hass(self) -> None:
         await super().async_added_to_hass()
-        self._apply_value(self._attr_is_on)
+        self._apply_value(bool(self._attr_is_on))
 
-    async def async_turn_on(self, **kwargs) -> None:
+    async def async_turn_on(self, **kwargs: Any) -> None:
         await self._async_set_state(True)
 
-    async def async_turn_off(self, **kwargs) -> None:
+    async def async_turn_off(self, **kwargs: Any) -> None:
         await self._async_set_state(False)
 
     async def _async_set_state(self, value: bool) -> None:

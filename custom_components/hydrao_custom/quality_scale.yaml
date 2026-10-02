@@ -7,8 +7,8 @@
 # does not apply, with the reason given in the comment.
 #
 # manifest.json declares "quality_scale": "bronze": every Bronze rule below is
-# done or exempt. Silver is not reached yet; its open rules are
-# parallel-updates and test-coverage.
+# done or exempt. Silver is not reached yet; its only open rule is
+# test-coverage.
 #
 # This level is self-declared. hassfest only validates this file for core
 # integrations and skips custom ones. The rules that hassfest can check
@@ -143,10 +143,11 @@ rules:
       would produce noise on every shower. Failures that matter (connection
       error with the device in range, failed config write) are logged.
   parallel-updates:
-    status: todo
+    status: done
     comment: >-
-      No platform defines PARALLEL_UPDATES. Read-only sensors should use 0;
-      button, number and switch need an explicit value.
+      PARALLEL_UPDATES is defined on every platform: 0 for the read-only
+      sensors, 1 for button, number and switch (their writes are queued
+      locally and sent on the next BLE connection).
   reauthentication-flow:
     status: exempt
     comment: The integration has no authentication.
@@ -164,8 +165,12 @@ rules:
     status: done
     comment: One device per entry, with identifiers, firmware, hardware and serial.
   diagnostics:
-    status: todo
-    comment: There is no diagnostics.py.
+    status: done
+    comment: >-
+      diagnostics.py returns the entry data and options plus the coordinator
+      state (Bluetooth status, pending writes, last data). The Bluetooth
+      address, name and device id are redacted; tests/test_diagnostics.py
+      checks that none of them leaks.
   discovery-update-info:
     status: exempt
     comment: >-
@@ -210,10 +215,10 @@ rules:
       Diagnostic and config categories are used (thresholds, RSSI, Bluetooth
       status, pending config, soaping time, comfort temperature, auto sync).
   entity-device-class:
-    status: todo
+    status: done
     comment: >-
-      flow_rate has no device class although SensorDeviceClass.VOLUME_FLOW_RATE
-      supports liters per minute. All other measured sensors have one.
+      Every measured sensor has a device class; flow_rate uses
+      SensorDeviceClass.VOLUME_FLOW_RATE (liters per minute).
   entity-disabled-by-default:
     status: todo
     comment: >-
@@ -227,9 +232,11 @@ rules:
     status: exempt
     comment: The integration raises no user-facing exceptions.
   icon-translations:
-    status: todo
+    status: done
     comment: >-
-      Icons are hard-coded with icon= / _attr_icon. There is no icons.json.
+      icons.json defines every entity icon (with one icon per state for the
+      Bluetooth status sensor); no icon is hard-coded in the Python code, and
+      tests/test_icons.py enforces it.
   reconfiguration-flow:
     status: exempt
     comment: >-
@@ -253,7 +260,8 @@ rules:
     status: exempt
     comment: The integration makes no HTTP requests.
   strict-typing:
-    status: todo
+    status: done
     comment: >-
-      Annotations are partial (for example DataUpdateCoordinator is not
-      parametrized) and there is no mypy strict configuration.
+      The whole integration passes `mypy --strict` with zero errors, enforced
+      by the Typing workflow. DataUpdateCoordinator is parametrized and
+      HydraoConfigEntry types entry.runtime_data.

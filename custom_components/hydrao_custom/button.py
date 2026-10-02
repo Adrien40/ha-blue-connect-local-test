@@ -9,11 +9,13 @@ from .const import HydraoConfigEntry
 from .coordinator import HydraoDataUpdateCoordinator
 from .entity import HydraoEntity
 
+# Writes are queued locally and sent on the next BLE connection.
+PARALLEL_UPDATES = 1
+
 BUTTON_DESCRIPTIONS = [
     ButtonEntityDescription(
         key="end_shower",
         translation_key="end_shower",
-        icon="mdi:water-off",
     )
 ]
 

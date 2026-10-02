@@ -4,7 +4,8 @@
 import asyncio
 import logging
 import time
-from collections.abc import Callable
+from collections.abc import Callable, Mapping
+from typing import Any
 
 from bleak import BleakClient
 from bleak.exc import BleakError
@@ -100,7 +101,7 @@ _BLE_TRANSIENT_ERRORS = (BleakError, TimeoutError, OSError, EOFError)
 ADVERTISEMENT_GRACE_PERIOD = 1.0
 
 
-class HydraoDataUpdateCoordinator(DataUpdateCoordinator):
+class HydraoDataUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
     """Coordinator for Hydrao BLE device.
 
     This coordinator does not use the standard polling interval (update_interval=None)
@@ -108,6 +109,8 @@ class HydraoDataUpdateCoordinator(DataUpdateCoordinator):
     (async_run_loop) to process real-time notifications and spontaneous connections
     when the water flows.
     """
+
+    config_entry: HydraoConfigEntry
 
     def __init__(self, hass: HomeAssistant, entry: HydraoConfigEntry) -> None:
         self.address = entry.data[CONF_ADDRESS]
@@ -124,13 +127,13 @@ class HydraoDataUpdateCoordinator(DataUpdateCoordinator):
             update_interval=None,
         )
 
-        self.static_data = {
+        self.static_data: dict[str, Any] = {
             "firmware": entry.data.get("firmware", "unknown"),
             "hardware": entry.data.get("hardware", "unknown"),
             "device_id": entry.data.get("device_id", "unknown"),
         }
 
-        self.last_valid_data = {"bluetooth_status": BT_STATUS_WAITING}
+        self.last_valid_data: dict[str, Any] = {"bluetooth_status": BT_STATUS_WAITING}
         self._raw_cfg: bytearray | None = None
         self._raw_cfg_lock = asyncio.Lock()
 
@@ -299,7 +302,7 @@ class HydraoDataUpdateCoordinator(DataUpdateCoordinator):
             self.last_valid_data["bluetooth_status"] = status
             self.async_set_updated_data(self.last_valid_data)
 
-    def async_update_options(self, options: dict) -> None:
+    def async_update_options(self, options: Mapping[str, Any]) -> None:
         if dict(options) == self._last_processed_options:
             return
         self._last_processed_options = dict(options)
@@ -313,7 +316,7 @@ class HydraoDataUpdateCoordinator(DataUpdateCoordinator):
 
         self.async_update_listeners()
 
-    def _queue_pending_writes_from_options(self, options: dict) -> None:
+    def _queue_pending_writes_from_options(self, options: Mapping[str, Any]) -> None:
         """Compare the device's known config against `options` and queue
         whatever differs for the next write. Called both when options
         actually change (async_update_options) and after every fresh

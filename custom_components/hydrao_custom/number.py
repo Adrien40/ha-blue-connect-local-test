@@ -1,6 +1,8 @@
 # Copyright (c) 2026 Adrien40
 # SPDX-License-Identifier: GPL-3.0-only
 
+from typing import cast
+
 from homeassistant.components.number import (
     NumberEntity,
     NumberEntityDescription,
@@ -14,6 +16,9 @@ from .const import HydraoConfigEntry
 from .coordinator import HydraoDataUpdateCoordinator
 from .entity import HydraoEntity
 from .entity_helpers import apply_and_persist
+
+# Writes are queued locally and sent on the next BLE connection.
+PARALLEL_UPDATES = 1
 
 COMFORT_TEMP_DESC = NumberEntityDescription(
     key="comfort_temperature",
@@ -55,7 +60,7 @@ class HydraoNumberEntity(HydraoEntity, NumberEntity):
 
     async def async_added_to_hass(self) -> None:
         await super().async_added_to_hass()
-        self._apply_value(self._attr_native_value)
+        self._apply_value(cast(float, self._attr_native_value))
 
     async def async_set_native_value(self, value: float) -> None:
         self._attr_native_value = value

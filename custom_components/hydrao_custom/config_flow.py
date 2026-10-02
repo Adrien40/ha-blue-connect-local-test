@@ -1,9 +1,12 @@
 # Copyright (c) 2026 Adrien40
 # SPDX-License-Identifier: GPL-3.0-only
 
+from __future__ import annotations
+
 import logging
 import re
-from typing import Any
+from collections.abc import Callable, Mapping
+from typing import TYPE_CHECKING, Any
 
 import voluptuous as vol
 from homeassistant import config_entries
@@ -21,6 +24,9 @@ from .const import (
     MIN_SOAPING_DURATION,
 )
 from .util import is_valid_temp, pairwise_increasing_errors
+
+if TYPE_CHECKING:
+    from .coordinator import HydraoDataUpdateCoordinator
 
 # NOTE: Number selectors below (min_temp_threshold, soaping_duration,
 # thresholds) intentionally do NOT set `native_min_value`/`native_max_value`
@@ -146,7 +152,7 @@ class HydraoConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                     },
                 )
 
-        schema_fields = {}
+        schema_fields: dict[vol.Marker, Any] = {}
         if default_mac is not vol.UNDEFINED:
             schema_fields[vol.Required(CONF_ADDRESS, default=default_mac)] = str
         else:
@@ -356,24 +362,24 @@ class HydraoOptionsFlowHandler(config_entries.OptionsFlow):
                     return vol.UNDEFINED
             return vol.UNDEFINED
 
-        def _threshold_key(key: str) -> tuple[vol.Marker, selector.Selector]:
+        def _threshold_key(key: str) -> tuple[vol.Marker, selector.Selector[Any]]:
             return self._threshold_field(key, _get_val)
 
-        def _color_key(key: str) -> tuple[vol.Marker, selector.Selector]:
+        def _color_key(key: str) -> tuple[vol.Marker, selector.Selector[Any]]:
             return self._color_field(key, _get_color_val)
 
-        def _soaping_duration_key() -> tuple[vol.Marker, selector.Selector]:
+        def _soaping_duration_key() -> tuple[vol.Marker, selector.Selector[Any]]:
             return self._soaping_duration_field(user_input, coordinator, opts, data)
 
-        def _comfort_temp_key() -> tuple[vol.Marker, selector.Selector]:
+        def _comfort_temp_key() -> tuple[vol.Marker, selector.Selector[Any]]:
             return self._comfort_temp_field(user_input, coordinator, opts, data)
 
-        def _auto_sync_key() -> tuple[vol.Marker, selector.Selector]:
+        def _auto_sync_key() -> tuple[vol.Marker, selector.Selector[Any]]:
             return self._auto_sync_field(user_input, coordinator, opts, data)
 
-        comfort_fields: dict[vol.Marker, selector.Selector] = {}
-        threshold_fields: dict[vol.Marker, selector.Selector] = {}
-        color_fields: dict[vol.Marker, selector.Selector] = {}
+        comfort_fields: dict[vol.Marker, selector.Selector[Any]] = {}
+        threshold_fields: dict[vol.Marker, selector.Selector[Any]] = {}
+        color_fields: dict[vol.Marker, selector.Selector[Any]] = {}
 
         comfort_marker, comfort_selector = _comfort_temp_key()
         comfort_fields[comfort_marker] = comfort_selector
@@ -412,7 +418,9 @@ class HydraoOptionsFlowHandler(config_entries.OptionsFlow):
         return self.async_show_form(step_id="init", data_schema=schema, errors=errors)
 
     @staticmethod
-    def _threshold_field(key: str, get_val) -> tuple[vol.Marker, selector.Selector]:
+    def _threshold_field(
+        key: str, get_val: Callable[[str, type], Any]
+    ) -> tuple[vol.Marker, selector.Selector[Any]]:
         current = get_val(key, int)
         if current is vol.UNDEFINED:
             return vol.Optional(key), selector.NumberSelector(
@@ -431,7 +439,9 @@ class HydraoOptionsFlowHandler(config_entries.OptionsFlow):
         )
 
     @staticmethod
-    def _color_field(key: str, get_color_val) -> tuple[vol.Marker, selector.Selector]:
+    def _color_field(
+        key: str, get_color_val: Callable[[str], Any]
+    ) -> tuple[vol.Marker, selector.Selector[Any]]:
         current = get_color_val(key)
         if current is vol.UNDEFINED:
             return vol.Optional(key), selector.ColorRGBSelector(
@@ -441,8 +451,11 @@ class HydraoOptionsFlowHandler(config_entries.OptionsFlow):
 
     @staticmethod
     def _soaping_duration_field(
-        user_input: dict[str, Any] | None, coordinator, opts, data
-    ) -> tuple[vol.Marker, selector.Selector]:
+        user_input: dict[str, Any] | None,
+        coordinator: HydraoDataUpdateCoordinator | None,
+        opts: Mapping[str, Any],
+        data: Mapping[str, Any],
+    ) -> tuple[vol.Marker, selector.Selector[Any]]:
         if user_input and user_input.get("soaping_duration") is not None:
             return vol.Required(
                 "soaping_duration", default=int(user_input["soaping_duration"])
@@ -480,8 +493,11 @@ class HydraoOptionsFlowHandler(config_entries.OptionsFlow):
 
     @staticmethod
     def _comfort_temp_field(
-        user_input: dict[str, Any] | None, coordinator, opts, data
-    ) -> tuple[vol.Marker, selector.Selector]:
+        user_input: dict[str, Any] | None,
+        coordinator: HydraoDataUpdateCoordinator | None,
+        opts: Mapping[str, Any],
+        data: Mapping[str, Any],
+    ) -> tuple[vol.Marker, selector.Selector[Any]]:
         default = (
             coordinator.min_temp_threshold
             if coordinator
@@ -506,8 +522,11 @@ class HydraoOptionsFlowHandler(config_entries.OptionsFlow):
 
     @staticmethod
     def _auto_sync_field(
-        user_input: dict[str, Any] | None, coordinator, opts, data
-    ) -> tuple[vol.Marker, selector.Selector]:
+        user_input: dict[str, Any] | None,
+        coordinator: HydraoDataUpdateCoordinator | None,
+        opts: Mapping[str, Any],
+        data: Mapping[str, Any],
+    ) -> tuple[vol.Marker, selector.Selector[Any]]:
         default = (
             coordinator.auto_sync_at_comfort
             if coordinator

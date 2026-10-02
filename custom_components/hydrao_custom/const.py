@@ -3,17 +3,22 @@
 
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import Platform
+
+if TYPE_CHECKING:
+    from .coordinator import HydraoDataUpdateCoordinator
 
 DOMAIN = "hydrao_custom"
 PLATFORMS = [Platform.SENSOR, Platform.BUTTON, Platform.NUMBER, Platform.SWITCH]
 
 # Typed alias for the config entry, so entry.runtime_data is correctly
 # typed as our coordinator wherever this alias is used instead of the
-# plain ConfigEntry. Written as a plain generic alias (not the `type`
-# statement) to stay compatible with Python < 3.12.
-HydraoConfigEntry = ConfigEntry["HydraoDataUpdateCoordinator"]
+# plain ConfigEntry. The `type` statement is evaluated lazily, so the
+# coordinator can be imported for type checking only (no import cycle).
+type HydraoConfigEntry = ConfigEntry[HydraoDataUpdateCoordinator]
 
 CHAR_FIRMWARE = "00002a26-0000-1000-8000-00805f9b34fb"
 CHAR_VOLUME_AND_DURATION = "0000ca1c-0000-1000-8000-00805f9b34fb"
